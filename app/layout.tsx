@@ -1,22 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Montserrat, Open_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { AnalyticsWrapper } from "@/components/analytics-wrapper"
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-heading",
-  display: "swap",
-})
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
-})
 
 export const metadata: Metadata = {
   title: "YouTour - Tours Privados en Medellín y Guatapé | Experiencias Auténticas",
@@ -60,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${montserrat.variable} ${openSans.variable}`}>
+    <html lang="es">
       <body className={`font-sans antialiased`}>
         <AnalyticsWrapper>{children}</AnalyticsWrapper>
         <Analytics />

@@ -1,0 +1,2 @@
+ALTER TABLE bookings
+ADD COLUMN IF NOT EXISTS mp_payment_id TEXT;

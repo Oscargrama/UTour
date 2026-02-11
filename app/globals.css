@@ -4,6 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --font-body:
+    "Open Sans", "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-heading:
+    Montserrat, "Avenir Next Demi Bold", "Segoe UI Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -81,7 +85,6 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
-/* Configurar las fuentes correctas para YouTour (Montserrat y Open Sans) */
 @theme inline {
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
