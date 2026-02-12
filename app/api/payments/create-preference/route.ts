@@ -83,9 +83,10 @@ export async function POST(request: Request) {
     const serviceRoleKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY")
     const mpAccessToken = getRequiredEnv("MERCADO_PAGO_ACCESS_TOKEN")
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL
-    const notificationUrl =
-      process.env.MERCADO_PAGO_WEBHOOK_URL || (appUrl ? `${appUrl}/api/payments/webhook` : undefined)
+    const requestOrigin = new URL(request.url).origin
+    const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || requestOrigin
+    const appUrl = rawAppUrl.replace(/\/+$/, "")
+    const notificationUrl = process.env.MERCADO_PAGO_WEBHOOK_URL || `${appUrl}/api/payments/webhook`
 
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
@@ -144,18 +145,14 @@ export async function POST(request: Request) {
       },
     }
 
-    if (appUrl) {
-      preferenceBody.back_urls = {
-        success: `${appUrl}/book?payment=success&booking_id=${createdBooking.id}`,
-        pending: `${appUrl}/book?payment=pending&booking_id=${createdBooking.id}`,
-        failure: `${appUrl}/book?payment=failure&booking_id=${createdBooking.id}`,
-      }
-      preferenceBody.auto_return = "approved"
+    preferenceBody.back_urls = {
+      success: `${appUrl}/book?payment=success&booking_id=${createdBooking.id}`,
+      pending: `${appUrl}/book?payment=pending&booking_id=${createdBooking.id}`,
+      failure: `${appUrl}/book?payment=failure&booking_id=${createdBooking.id}`,
     }
+    preferenceBody.auto_return = "approved"
 
-    if (notificationUrl) {
-      preferenceBody.notification_url = notificationUrl
-    }
+    preferenceBody.notification_url = notificationUrl
 
     const preference = await preferenceClient.create({ body: preferenceBody })
 
