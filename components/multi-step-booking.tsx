@@ -196,8 +196,9 @@ export function MultiStepBooking() {
         throw new Error(result?.details || result?.error || "No se pudo crear la preferencia de pago")
       }
 
-      if (!result?.init_point) {
-        throw new Error("No se recibió init_point de Mercado Pago")
+      const checkoutUrl = result?.checkout_url || result?.sandbox_init_point || result?.init_point
+      if (!checkoutUrl) {
+        throw new Error("No se recibió URL de checkout de Mercado Pago")
       }
 
       toast({
@@ -205,7 +206,7 @@ export function MultiStepBooking() {
         description: "Te estamos enviando a Mercado Pago para completar tu reserva.",
       })
 
-      window.location.href = result.init_point
+      window.location.href = checkoutUrl
     } catch (error) {
       console.error("[v0] Booking error:", error)
       toast({

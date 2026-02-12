@@ -195,9 +195,14 @@ export async function POST(request: Request) {
       )
     }
 
+    const shouldUseSandbox = process.env.MERCADO_PAGO_USE_SANDBOX === "true"
+    const checkoutUrl =
+      shouldUseSandbox && preference.sandbox_init_point ? preference.sandbox_init_point : preference.init_point
+
     return NextResponse.json({
       booking_id: createdBooking.id,
       preference_id: preference.id,
+      checkout_url: checkoutUrl,
       init_point: preference.init_point,
       sandbox_init_point: preference.sandbox_init_point,
     })
