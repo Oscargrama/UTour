@@ -64,7 +64,8 @@ export async function POST(request: Request) {
     const mpAccessToken = getRequiredEnv("MERCADO_PAGO_ACCESS_TOKEN")
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL
-    const notificationUrl = process.env.MERCADO_PAGO_WEBHOOK_URL
+    const notificationUrl =
+      process.env.MERCADO_PAGO_WEBHOOK_URL || (appUrl ? `${appUrl}/api/payments/webhook` : undefined)
 
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 

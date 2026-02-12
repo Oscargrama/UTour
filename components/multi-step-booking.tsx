@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, ArrowRight, Users, Globe, User, Mail, Phone, Check } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { emailTemplates } from "@/lib/email-templates"
 import Link from "next/link"
 
 const privateTours = [
@@ -148,8 +147,9 @@ export function MultiStepBooking() {
 
     try {
       const supabase = createClient()
-
       const selectedTour = privateTours.find((t) => t.id === formData.tour_type)
+      if (!selectedTour) throw new Error("Tour no válido")
+      if (!formData.date) throw new Error("Fecha no válida")
 
       let ambassadorId = null
       if (formData.referral_code) {
@@ -164,112 +164,53 @@ export function MultiStepBooking() {
         }
       }
 
-      if (formData.booking_mode === "join_group" && selectedGroup) {
-        const { data: groupData, error: groupError } = await supabase
-          .from("bookings")
-          .select("*")
-          .eq("id", selectedGroup)
-          .single()
+      const peopleCount = Number.parseInt(formData.number_of_people)
+      const totalPrice =
+        formData.booking_mode === "join_group" ? Math.round((selectedTour.price / 4) * peopleCount) : selectedTour.price
 
-        if (groupError || !groupData) throw new Error("Grupo no encontrado")
-
-        const newAvailableSeats = groupData.available_seats - Number.parseInt(formData.number_of_people)
-        const { error: updateError } = await supabase
-          .from("bookings")
-          .update({
-            available_seats: newAvailableSeats,
-            is_group_open: newAvailableSeats > 0,
-          })
-          .eq("id", selectedGroup)
-
-        if (updateError) throw updateError
-
-        const { data, error } = await supabase
-          .from("bookings")
-          .insert([
-            {
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              tour_type: formData.tour_type,
-              date: formData.date?.toISOString().split("T")[0],
-              number_of_people: Number.parseInt(formData.number_of_people),
-              language: formData.language,
-              has_minors: formData.has_minors,
-              status: "confirmed",
-              total_price: (selectedTour?.price || 0) * Number.parseInt(formData.number_of_people),
-              ambassador_id: ambassadorId,
-              referral_code: formData.referral_code || null,
-              booking_mode: "join_group",
-            },
-          ])
-          .select()
-
-        if (error) throw error
-
-        const reference = data[0]?.booking_reference || "N/A"
-        setBookingReference(reference)
-      } else {
-        const peopleCount = Number.parseInt(formData.number_of_people)
-        const maxCapacity = 4
-        const availableSeats = maxCapacity - peopleCount
-
-        const { data, error } = await supabase
-          .from("bookings")
-          .insert([
-            {
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              tour_type: formData.tour_type,
-              date: formData.date?.toISOString().split("T")[0],
-              number_of_people: peopleCount,
-              language: formData.language,
-              has_minors: formData.has_minors,
-              status: "pending",
-              total_price: selectedTour?.price || 0,
-              ambassador_id: ambassadorId,
-              referral_code: formData.referral_code || null,
-              booking_mode: "full_group",
-              available_seats: availableSeats,
-              is_group_open: availableSeats > 0,
-            },
-          ])
-          .select()
-
-        if (error) throw error
-
-        const reference = data[0]?.booking_reference || "N/A"
-        setBookingReference(reference)
+      const bookingData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        tour_type: formData.tour_type,
+        date: formData.date.toISOString().split("T")[0],
+        number_of_people: peopleCount,
+        language: formData.language as "spanish" | "english",
+        has_minors: formData.has_minors,
+        ambassador_id: ambassadorId,
+        referral_code: formData.referral_code || null,
+        booking_mode: formData.booking_mode as "full_group" | "join_group",
       }
 
-      const emailData = emailTemplates.bookingConfirmation({
-        name: formData.name,
-        tour_type: selectedTour?.name || formData.tour_type,
-        date: formData.date?.toLocaleDateString("es-CO") || "",
-        number_of_people: Number.parseInt(formData.number_of_people),
-      })
-
-      await fetch("/api/send-email", {
+      const response = await fetch("/api/payments/create-preference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: formData.email,
-          ...emailData,
+          bookingData,
+          total_price: totalPrice,
         }),
       })
 
-      setCurrentStep("confirmation")
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result?.details || result?.error || "No se pudo crear la preferencia de pago")
+      }
+
+      if (!result?.init_point) {
+        throw new Error("No se recibió init_point de Mercado Pago")
+      }
 
       toast({
-        title: "¡Reserva Confirmada!",
-        description: `Tu referencia es: ${bookingReference}`,
+        title: "Redirigiendo al pago",
+        description: "Te estamos enviando a Mercado Pago para completar tu reserva.",
       })
+
+      window.location.href = result.init_point
     } catch (error) {
       console.error("[v0] Booking error:", error)
       toast({
         title: "Error",
-        description: "Hubo un problema al procesar tu reserva. Intenta de nuevo.",
+        description: error instanceof Error ? error.message : "Hubo un problema al iniciar el pago. Intenta de nuevo.",
         variant: "destructive",
       })
     } finally {

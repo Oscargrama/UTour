@@ -78,13 +78,16 @@ function mapPaymentStatusToBookingStatus(paymentStatus: string) {
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as MercadoPagoWebhookPayload
-    const eventType = payload.type ?? ""
-    const paymentId = payload.data?.id ?? ""
+    const url = new URL(request.url)
+    const queryType = url.searchParams.get("type") ?? url.searchParams.get("topic") ?? ""
+    const queryPaymentId = url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? ""
+
+    const eventType = payload.type ?? queryType
+    const paymentId = payload.data?.id ?? queryPaymentId
 
     const webhookSecret = getRequiredEnv("MERCADO_PAGO_WEBHOOK_SECRET")
     const requestIdHeader = request.headers.get("x-request-id")
     const signatureHeader = request.headers.get("x-signature")
-    const url = new URL(request.url)
     const dataId = url.searchParams.get("data.id") ?? paymentId
 
     const validSignature = isValidMercadoPagoSignature({
