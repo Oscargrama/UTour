@@ -48,6 +48,26 @@ function getRequiredEnv(name: string) {
   return value
 }
 
+function normalizeBaseUrl(candidate: string | undefined | null) {
+  if (!candidate) return null
+  try {
+    const url = new URL(candidate)
+    if (!["http:", "https:"].includes(url.protocol)) return null
+    return `${url.origin}${url.pathname}`.replace(/\/+$/, "")
+  } catch {
+    return null
+  }
+}
+
+function isLocalhostUrl(url: string) {
+  try {
+    const host = new URL(url).hostname
+    return host === "localhost" || host === "127.0.0.1"
+  } catch {
+    return false
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { bookingData, total_price }: CreatePreferenceBody = await request.json()
@@ -84,8 +104,10 @@ export async function POST(request: Request) {
     const mpAccessToken = getRequiredEnv("MERCADO_PAGO_ACCESS_TOKEN")
 
     const requestOrigin = new URL(request.url).origin
-    const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || requestOrigin
-    const appUrl = rawAppUrl.replace(/\/+$/, "")
+    const envAppUrl = normalizeBaseUrl(process.env.APP_URL) || normalizeBaseUrl(process.env.NEXT_PUBLIC_APP_URL)
+    const requestBaseUrl = normalizeBaseUrl(requestOrigin)
+    const appUrl = envAppUrl && !isLocalhostUrl(envAppUrl) ? envAppUrl : requestBaseUrl
+    if (!appUrl) throw new Error("Unable to determine a valid APP_URL for Mercado Pago back_urls")
     const notificationUrl = process.env.MERCADO_PAGO_WEBHOOK_URL || `${appUrl}/api/payments/webhook`
 
     const supabase = createClient(supabaseUrl, serviceRoleKey)
