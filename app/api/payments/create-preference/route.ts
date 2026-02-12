@@ -22,6 +22,26 @@ type CreatePreferenceBody = {
   total_price: number
 }
 
+function getErrorDetails(error: unknown) {
+  if (error instanceof Error) return error.message
+  if (typeof error === "string") return error
+  if (error && typeof error === "object") {
+    try {
+      const record = error as Record<string, unknown>
+      if (typeof record.message === "string" && record.message) return record.message
+      if (typeof record.error === "string" && record.error) return record.error
+      if (record.cause && typeof record.cause === "object") {
+        const cause = record.cause as Record<string, unknown>
+        if (typeof cause.message === "string" && cause.message) return cause.message
+      }
+      return JSON.stringify(record)
+    } catch {
+      return "Unserializable error object"
+    }
+  }
+  return "Unknown error"
+}
+
 function getRequiredEnv(name: string) {
   const value = process.env[name]
   if (!value) throw new Error(`Missing required environment variable: ${name}`)
@@ -163,10 +183,12 @@ export async function POST(request: Request) {
       sandbox_init_point: preference.sandbox_init_point,
     })
   } catch (error) {
+    const details = getErrorDetails(error)
+    console.error("[payments/create-preference] Error:", error)
     return NextResponse.json(
       {
         error: "Failed to create Mercado Pago preference",
-        details: error instanceof Error ? error.message : "Unknown error",
+        details,
       },
       { status: 500 },
     )
