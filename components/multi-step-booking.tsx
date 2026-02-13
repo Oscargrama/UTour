@@ -47,7 +47,7 @@ const privateTours = [
     id: "city-tour-chiva",
     name: "City Tour en Chiva",
     description: "Recorrido por sitios emblemáticos en chiva típica",
-    price: 130000,
+    price: 2,
     duration: "7 horas",
   },
   {
