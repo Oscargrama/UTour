@@ -167,6 +167,13 @@ export async function POST(request: Request) {
       },
     }
 
+    // Keep all payment methods by default. Enable this only for specific tests.
+    if (process.env.MERCADO_PAGO_EXCLUDE_ACCOUNT_MONEY === "true") {
+      preferenceBody.payment_methods = {
+        excluded_payment_types: [{ id: "account_money" }],
+      }
+    }
+
     preferenceBody.back_urls = {
       success: `${appUrl}/book?payment=success&booking_id=${createdBooking.id}`,
       pending: `${appUrl}/book?payment=pending&booking_id=${createdBooking.id}`,
