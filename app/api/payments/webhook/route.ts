@@ -56,14 +56,13 @@ function safeCompareHex(a: string, b: string) {
 
 function isValidMercadoPagoSignature(params: {
   signatureHeader: string | null
-  requestIdHeader: string | null
   dataId: string
   secret: string
 }) {
   const parsed = parseSignatureHeader(params.signatureHeader)
-  if (!parsed || !params.requestIdHeader || !params.dataId) return false
+  if (!parsed || !params.dataId) return false
 
-  const manifest = `id:${params.dataId};request-id:${params.requestIdHeader};ts:${parsed.ts};`
+  const manifest = `id:${params.dataId};ts:${parsed.ts};`
   const expected = createHmac("sha256", params.secret).update(manifest).digest("hex")
 
   return safeCompareHex(expected, parsed.v1)
@@ -86,13 +85,11 @@ export async function POST(request: Request) {
     const paymentId = payload.data?.id ?? queryPaymentId
 
     const webhookSecret = getRequiredEnv("MERCADO_PAGO_WEBHOOK_SECRET")
-    const requestIdHeader = request.headers.get("x-request-id")
     const signatureHeader = request.headers.get("x-signature")
     const dataId = url.searchParams.get("data.id") ?? paymentId
 
     const validSignature = isValidMercadoPagoSignature({
       signatureHeader,
-      requestIdHeader,
       dataId,
       secret: webhookSecret,
     })
