@@ -54,18 +54,30 @@ function safeCompareHex(a: string, b: string) {
   }
 }
 
+function buildSignatureCandidates(params: { dataId: string; ts: string; requestIdHeader: string | null }) {
+  const base = `id:${params.dataId};ts:${params.ts};`
+  if (!params.requestIdHeader) return [base]
+  return [base, `id:${params.dataId};request-id:${params.requestIdHeader};ts:${params.ts};`]
+}
+
 function isValidMercadoPagoSignature(params: {
   signatureHeader: string | null
+  requestIdHeader: string | null
   dataId: string
   secret: string
 }) {
   const parsed = parseSignatureHeader(params.signatureHeader)
   if (!parsed || !params.dataId) return false
 
-  const manifest = `id:${params.dataId};ts:${parsed.ts};`
-  const expected = createHmac("sha256", params.secret).update(manifest).digest("hex")
-
-  return safeCompareHex(expected, parsed.v1)
+  const manifests = buildSignatureCandidates({
+    dataId: params.dataId,
+    ts: parsed.ts,
+    requestIdHeader: params.requestIdHeader,
+  })
+  return manifests.some((manifest) => {
+    const expected = createHmac("sha256", params.secret).update(manifest).digest("hex")
+    return safeCompareHex(expected, parsed.v1)
+  })
 }
 
 function mapPaymentStatusToBookingStatus(paymentStatus: string) {
@@ -80,38 +92,71 @@ export async function POST(request: Request) {
     const url = new URL(request.url)
     const queryType = url.searchParams.get("type") ?? url.searchParams.get("topic") ?? ""
     const queryPaymentId = url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? ""
+    const bodyPaymentId = payload.data?.id ?? ""
 
     const eventType = payload.type ?? queryType
-    const paymentId = payload.data?.id ?? queryPaymentId
+    const paymentId = queryPaymentId || bodyPaymentId
+
+    if (eventType !== "payment") {
+      return NextResponse.json(
+        {
+          received: true,
+          ignored: true,
+          reason: "Unsupported notification type",
+        },
+        { status: 200 },
+      )
+    }
+
+    if (!paymentId) {
+      return NextResponse.json(
+        {
+          received: true,
+          ignored: true,
+          reason: "Missing payment id",
+        },
+        { status: 200 },
+      )
+    }
 
     const webhookSecret = getRequiredEnv("MERCADO_PAGO_WEBHOOK_SECRET")
     const signatureHeader = request.headers.get("x-signature")
-    const dataId = url.searchParams.get("data.id") ?? paymentId
+    const requestIdHeader = request.headers.get("x-request-id")
 
     const validSignature = isValidMercadoPagoSignature({
       signatureHeader,
-      dataId,
+      requestIdHeader,
+      dataId: paymentId,
       secret: webhookSecret,
     })
 
     if (!validSignature) {
+      const parsedSignature = parseSignatureHeader(signatureHeader)
+      const manifests = parsedSignature
+        ? buildSignatureCandidates({
+            dataId: paymentId,
+            ts: parsedSignature.ts,
+            requestIdHeader,
+          })
+        : []
+      const expectedHashes = manifests.map((manifest) =>
+        createHmac("sha256", webhookSecret).update(manifest).digest("hex").slice(0, 12),
+      )
+      console.log("[payments/webhook] Invalid signature", {
+        signature_present: !!signatureHeader,
+        signature_prefix: parsedSignature?.v1?.slice(0, 12) ?? null,
+        request_id: requestIdHeader,
+        event_type: eventType,
+        payment_id: paymentId,
+        manifest_candidates: manifests,
+        expected_hash_prefixes: expectedHashes,
+      })
       return NextResponse.json(
         {
           received: false,
           error: "Invalid Mercado Pago signature",
         },
         { status: 401 },
-      )
-    }
-
-    if (eventType !== "payment" || !paymentId) {
-      return NextResponse.json(
-        {
-          received: true,
-          ignored: true,
-          reason: "Unsupported notification type or missing payment id",
-        },
-        { status: 200 },
       )
     }
 
