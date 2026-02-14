@@ -94,6 +94,7 @@ function mapPaymentStatusToBookingStatus(paymentStatus: string) {
 
 export async function POST(request: Request) {
   try {
+    const strictSignature = process.env.MERCADO_PAGO_STRICT_SIGNATURE !== "false"
     const payload = (await request.json()) as MercadoPagoWebhookPayload
     const url = new URL(request.url)
     const queryType = url.searchParams.get("type") ?? url.searchParams.get("topic") ?? ""
@@ -153,6 +154,7 @@ export async function POST(request: Request) {
         createHmac("sha256", webhookSecret).update(manifest).digest("hex").slice(0, 12),
       )
       console.log("[payments/webhook] Invalid signature", {
+        strict_signature: strictSignature,
         signature_present: !!signatureHeader,
         signature_prefix: parsedSignature?.v1?.slice(0, 12) ?? null,
         request_id: requestIdHeader,
@@ -162,13 +164,17 @@ export async function POST(request: Request) {
         manifest_candidates: manifests,
         expected_hash_prefixes: expectedHashes,
       })
-      return NextResponse.json(
-        {
-          received: false,
-          error: "Invalid Mercado Pago signature",
-        },
-        { status: 401 },
-      )
+      if (!strictSignature) {
+        console.log("[payments/webhook] Proceeding despite invalid signature (strict mode disabled)")
+      } else {
+        return NextResponse.json(
+          {
+            received: false,
+            error: "Invalid Mercado Pago signature",
+          },
+          { status: 401 },
+        )
+      }
     }
 
     const mpAccessToken = getRequiredEnv("MERCADO_PAGO_ACCESS_TOKEN")
