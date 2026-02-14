@@ -60,23 +60,29 @@ function buildSignatureCandidates(params: { dataId: string; ts: string; requestI
   return [base, `id:${params.dataId};request-id:${params.requestIdHeader};ts:${params.ts};`]
 }
 
+function uniqueNonEmpty(values: Array<string | null | undefined>) {
+  return [...new Set(values.filter((value): value is string => !!value && value.trim().length > 0))]
+}
+
 function isValidMercadoPagoSignature(params: {
   signatureHeader: string | null
   requestIdHeader: string | null
-  dataId: string
+  dataIdCandidates: string[]
   secret: string
 }) {
   const parsed = parseSignatureHeader(params.signatureHeader)
-  if (!parsed || !params.dataId) return false
+  if (!parsed || params.dataIdCandidates.length === 0) return false
 
-  const manifests = buildSignatureCandidates({
-    dataId: params.dataId,
-    ts: parsed.ts,
-    requestIdHeader: params.requestIdHeader,
-  })
-  return manifests.some((manifest) => {
-    const expected = createHmac("sha256", params.secret).update(manifest).digest("hex")
-    return safeCompareHex(expected, parsed.v1)
+  return params.dataIdCandidates.some((dataId) => {
+    const manifests = buildSignatureCandidates({
+      dataId,
+      ts: parsed.ts,
+      requestIdHeader: params.requestIdHeader,
+    })
+    return manifests.some((manifest) => {
+      const expected = createHmac("sha256", params.secret).update(manifest).digest("hex")
+      return safeCompareHex(expected, parsed.v1)
+    })
   })
 }
 
@@ -91,11 +97,13 @@ export async function POST(request: Request) {
     const payload = (await request.json()) as MercadoPagoWebhookPayload
     const url = new URL(request.url)
     const queryType = url.searchParams.get("type") ?? url.searchParams.get("topic") ?? ""
-    const queryPaymentId = url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? ""
+    const queryDataId = url.searchParams.get("data.id")
+    const queryId = url.searchParams.get("id")
     const bodyPaymentId = payload.data?.id ?? ""
 
     const eventType = payload.type ?? queryType
-    const paymentId = queryPaymentId || bodyPaymentId
+    const paymentId = queryDataId || queryId || bodyPaymentId
+    const dataIdCandidates = uniqueNonEmpty([queryDataId, queryId, bodyPaymentId])
 
     if (eventType !== "payment") {
       return NextResponse.json(
@@ -126,18 +134,20 @@ export async function POST(request: Request) {
     const validSignature = isValidMercadoPagoSignature({
       signatureHeader,
       requestIdHeader,
-      dataId: paymentId,
+      dataIdCandidates,
       secret: webhookSecret,
     })
 
     if (!validSignature) {
       const parsedSignature = parseSignatureHeader(signatureHeader)
       const manifests = parsedSignature
-        ? buildSignatureCandidates({
-            dataId: paymentId,
-            ts: parsedSignature.ts,
-            requestIdHeader,
-          })
+        ? dataIdCandidates.flatMap((dataId) =>
+            buildSignatureCandidates({
+              dataId,
+              ts: parsedSignature.ts,
+              requestIdHeader,
+            }),
+          )
         : []
       const expectedHashes = manifests.map((manifest) =>
         createHmac("sha256", webhookSecret).update(manifest).digest("hex").slice(0, 12),
@@ -148,6 +158,7 @@ export async function POST(request: Request) {
         request_id: requestIdHeader,
         event_type: eventType,
         payment_id: paymentId,
+        data_id_candidates: dataIdCandidates,
         manifest_candidates: manifests,
         expected_hash_prefixes: expectedHashes,
       })
