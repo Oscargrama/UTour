@@ -190,14 +190,20 @@ export async function POST(request: Request) {
       payment_id: paymentId,
       payment_status: payment.status,
       preference_id: payment.preference_id,
+      external_reference: payment.external_reference,
+      metadata_booking_id:
+        typeof payment.metadata?.booking_id === "string" ? payment.metadata.booking_id : null,
     })
 
     const paymentStatus = payment.status ?? "pending"
     const preferenceId =
       payment.preference_id ??
       (typeof payment.metadata?.preference_id === "string" ? payment.metadata.preference_id : null)
+    const bookingIdFallback =
+      (typeof payment.external_reference === "string" ? payment.external_reference : null) ??
+      (typeof payment.metadata?.booking_id === "string" ? payment.metadata.booking_id : null)
 
-    if (!preferenceId) {
+    if (!preferenceId && !bookingIdFallback) {
       console.log("[payments/webhook] Payment without preference_id", {
         payment_id: paymentId,
         payment_status: paymentStatus,
@@ -215,16 +221,15 @@ export async function POST(request: Request) {
 
     const bookingStatus = mapPaymentStatusToBookingStatus(paymentStatus)
     const supabase = createClient(supabaseUrl, serviceRoleKey)
-
-    const { data: booking, error: bookingError } = await supabase
-      .from("bookings")
-      .select("id, mp_payment_id")
-      .eq("preference_id", preferenceId)
-      .maybeSingle()
+    const bookingQuery = supabase.from("bookings").select("id, mp_payment_id, preference_id")
+    const { data: booking, error: bookingError } = preferenceId
+      ? await bookingQuery.eq("preference_id", preferenceId).maybeSingle()
+      : await bookingQuery.eq("id", bookingIdFallback!).maybeSingle()
 
     if (bookingError) {
       console.error("[payments/webhook] Failed to load booking", {
         preference_id: preferenceId,
+        booking_id_fallback: bookingIdFallback,
         error: bookingError.message,
       })
       return NextResponse.json(
@@ -240,13 +245,18 @@ export async function POST(request: Request) {
     }
 
     if (!booking) {
-      console.log("[payments/webhook] No booking for preference_id", { preference_id: preferenceId, payment_id: paymentId })
+      console.log("[payments/webhook] No booking match", {
+        preference_id: preferenceId,
+        booking_id_fallback: bookingIdFallback,
+        payment_id: paymentId,
+      })
       return NextResponse.json(
         {
           received: true,
           ignored: true,
-          reason: "No booking found for preference_id",
+          reason: "No booking found for payment reference",
           preference_id: preferenceId,
+          booking_id_fallback: bookingIdFallback,
         },
         { status: 200 },
       )
@@ -269,13 +279,18 @@ export async function POST(request: Request) {
       )
     }
 
+    const updatePayload: Record<string, unknown> = {
+      payment_status: paymentStatus,
+      status: bookingStatus,
+      mp_payment_id: paymentId,
+    }
+    if (preferenceId && !booking.preference_id) {
+      updatePayload.preference_id = preferenceId
+    }
+
     const { error: updateError } = await supabase
       .from("bookings")
-      .update({
-        payment_status: paymentStatus,
-        status: bookingStatus,
-        mp_payment_id: paymentId,
-      })
+      .update(updatePayload)
       .eq("id", booking.id)
 
     if (updateError) {
