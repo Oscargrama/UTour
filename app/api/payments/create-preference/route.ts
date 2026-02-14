@@ -175,9 +175,9 @@ export async function POST(request: Request) {
     }
 
     preferenceBody.back_urls = {
-      success: `${appUrl}/book?payment=success&booking_id=${createdBooking.id}`,
-      pending: `${appUrl}/book?payment=pending&booking_id=${createdBooking.id}`,
-      failure: `${appUrl}/book?payment=failure&booking_id=${createdBooking.id}`,
+      success: `${appUrl}/checkout/result?status=approved&booking_id=${createdBooking.id}`,
+      pending: `${appUrl}/checkout/result?status=pending&booking_id=${createdBooking.id}`,
+      failure: `${appUrl}/checkout/result?status=rejected&booking_id=${createdBooking.id}`,
     }
     preferenceBody.auto_return = "approved"
 
