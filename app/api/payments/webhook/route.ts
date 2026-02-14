@@ -107,6 +107,7 @@ export async function POST(request: Request) {
     const dataIdCandidates = uniqueNonEmpty([queryDataId, queryId, bodyPaymentId])
 
     if (eventType !== "payment") {
+      console.log("[payments/webhook] Ignored event type", { eventType })
       return NextResponse.json(
         {
           received: true,
@@ -118,6 +119,7 @@ export async function POST(request: Request) {
     }
 
     if (!paymentId) {
+      console.log("[payments/webhook] Missing payment id", { query: url.search, payload })
       return NextResponse.json(
         {
           received: true,
@@ -184,6 +186,11 @@ export async function POST(request: Request) {
     const mpClient = new MercadoPagoConfig({ accessToken: mpAccessToken })
     const paymentClient = new Payment(mpClient)
     const payment = await paymentClient.get({ id: paymentId })
+    console.log("[payments/webhook] Payment fetched", {
+      payment_id: paymentId,
+      payment_status: payment.status,
+      preference_id: payment.preference_id,
+    })
 
     const paymentStatus = payment.status ?? "pending"
     const preferenceId =
@@ -191,6 +198,10 @@ export async function POST(request: Request) {
       (typeof payment.metadata?.preference_id === "string" ? payment.metadata.preference_id : null)
 
     if (!preferenceId) {
+      console.log("[payments/webhook] Payment without preference_id", {
+        payment_id: paymentId,
+        payment_status: paymentStatus,
+      })
       return NextResponse.json(
         {
           received: true,
@@ -212,6 +223,10 @@ export async function POST(request: Request) {
       .maybeSingle()
 
     if (bookingError) {
+      console.error("[payments/webhook] Failed to load booking", {
+        preference_id: preferenceId,
+        error: bookingError.message,
+      })
       return NextResponse.json(
         {
           received: true,
@@ -225,6 +240,7 @@ export async function POST(request: Request) {
     }
 
     if (!booking) {
+      console.log("[payments/webhook] No booking for preference_id", { preference_id: preferenceId, payment_id: paymentId })
       return NextResponse.json(
         {
           received: true,
@@ -237,6 +253,10 @@ export async function POST(request: Request) {
     }
 
     if (booking.mp_payment_id === paymentId) {
+      console.log("[payments/webhook] Duplicate payment event", {
+        booking_id: booking.id,
+        payment_id: paymentId,
+      })
       return NextResponse.json(
         {
           received: true,
@@ -259,6 +279,12 @@ export async function POST(request: Request) {
       .eq("id", booking.id)
 
     if (updateError) {
+      console.error("[payments/webhook] Failed to update booking", {
+        booking_id: booking.id,
+        preference_id: preferenceId,
+        payment_id: paymentId,
+        error: updateError.message,
+      })
       return NextResponse.json(
         {
           received: true,
@@ -271,6 +297,13 @@ export async function POST(request: Request) {
       )
     }
 
+    console.log("[payments/webhook] Booking updated", {
+      booking_id: booking.id,
+      payment_id: paymentId,
+      payment_status: paymentStatus,
+      booking_status: bookingStatus,
+      preference_id: preferenceId,
+    })
     return NextResponse.json(
       {
         received: true,
@@ -282,6 +315,7 @@ export async function POST(request: Request) {
       { status: 200 },
     )
   } catch (error) {
+    console.error("[payments/webhook] Processing error", error)
     return NextResponse.json(
       {
         received: true,
