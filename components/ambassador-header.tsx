@@ -5,6 +5,7 @@ import { createBrowserClient } from "@supabase/ssr"
 import { Button } from "@/components/ui/button"
 import { LogOut, PlusCircle } from "lucide-react"
 import Link from "next/link"
+import { BrandLogo } from "@/components/brand-logo"
 
 export default function AmbassadorHeader({ ambassadorName }: { ambassadorName: string }) {
   const router = useRouter()
@@ -21,12 +22,15 @@ export default function AmbassadorHeader({ ambassadorName }: { ambassadorName: s
   return (
     <header className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
+          <BrandLogo compact />
+          <div>
           <h1 className="text-2xl font-bold text-gray-900">Bienvenido {ambassadorName}</h1>
           <p className="text-sm text-gray-600">Panel de Embajador - YouTour</p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button asChild className="bg-[#f59e0b] hover:bg-[#fbbf24]">
+          <Button asChild className="bg-[#7a2ce8] hover:bg-[#6722c7]">
             <Link href="/ambassador/book" className="flex items-center gap-2">
               <PlusCircle className="h-4 w-4" />
               Agendar Tour

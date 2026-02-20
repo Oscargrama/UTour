@@ -107,7 +107,6 @@ export async function POST(request: Request) {
     const dataIdCandidates = uniqueNonEmpty([queryDataId, queryId, bodyPaymentId])
 
     if (eventType !== "payment") {
-      console.log("[payments/webhook] Ignored event type", { eventType })
       return NextResponse.json(
         {
           received: true,
@@ -119,7 +118,6 @@ export async function POST(request: Request) {
     }
 
     if (!paymentId) {
-      console.log("[payments/webhook] Missing payment id", { query: url.search, payload })
       return NextResponse.json(
         {
           received: true,
@@ -143,32 +141,13 @@ export async function POST(request: Request) {
 
     if (!validSignature) {
       const parsedSignature = parseSignatureHeader(signatureHeader)
-      const manifests = parsedSignature
-        ? dataIdCandidates.flatMap((dataId) =>
-            buildSignatureCandidates({
-              dataId,
-              ts: parsedSignature.ts,
-              requestIdHeader,
-            }),
-          )
-        : []
-      const expectedHashes = manifests.map((manifest) =>
-        createHmac("sha256", webhookSecret).update(manifest).digest("hex").slice(0, 12),
-      )
-      console.log("[payments/webhook] Invalid signature", {
+      console.warn("[payments/webhook] Invalid signature", {
         strict_signature: strictSignature,
-        signature_present: !!signatureHeader,
         signature_prefix: parsedSignature?.v1?.slice(0, 12) ?? null,
-        request_id: requestIdHeader,
         event_type: eventType,
         payment_id: paymentId,
-        data_id_candidates: dataIdCandidates,
-        manifest_candidates: manifests,
-        expected_hash_prefixes: expectedHashes,
       })
-      if (!strictSignature) {
-        console.log("[payments/webhook] Proceeding despite invalid signature (strict mode disabled)")
-      } else {
+      if (strictSignature) {
         return NextResponse.json(
           {
             received: false,
@@ -186,14 +165,6 @@ export async function POST(request: Request) {
     const mpClient = new MercadoPagoConfig({ accessToken: mpAccessToken })
     const paymentClient = new Payment(mpClient)
     const payment = await paymentClient.get({ id: paymentId })
-    console.log("[payments/webhook] Payment fetched", {
-      payment_id: paymentId,
-      payment_status: payment.status,
-      preference_id: payment.preference_id,
-      external_reference: payment.external_reference,
-      metadata_booking_id:
-        typeof payment.metadata?.booking_id === "string" ? payment.metadata.booking_id : null,
-    })
 
     const paymentStatus = payment.status ?? "pending"
     const preferenceId =
@@ -204,7 +175,7 @@ export async function POST(request: Request) {
       (typeof payment.metadata?.booking_id === "string" ? payment.metadata.booking_id : null)
 
     if (!preferenceId && !bookingIdFallback) {
-      console.log("[payments/webhook] Payment without preference_id", {
+      console.warn("[payments/webhook] Payment missing reference data", {
         payment_id: paymentId,
         payment_status: paymentStatus,
       })
@@ -245,7 +216,7 @@ export async function POST(request: Request) {
     }
 
     if (!booking) {
-      console.log("[payments/webhook] No booking match", {
+      console.warn("[payments/webhook] No booking match", {
         preference_id: preferenceId,
         booking_id_fallback: bookingIdFallback,
         payment_id: paymentId,
@@ -263,10 +234,6 @@ export async function POST(request: Request) {
     }
 
     if (booking.mp_payment_id === paymentId) {
-      console.log("[payments/webhook] Duplicate payment event", {
-        booking_id: booking.id,
-        payment_id: paymentId,
-      })
       return NextResponse.json(
         {
           received: true,
@@ -311,14 +278,6 @@ export async function POST(request: Request) {
         { status: 200 },
       )
     }
-
-    console.log("[payments/webhook] Booking updated", {
-      booking_id: booking.id,
-      payment_id: paymentId,
-      payment_status: paymentStatus,
-      booking_status: bookingStatus,
-      preference_id: preferenceId,
-    })
     return NextResponse.json(
       {
         received: true,

@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Mail, Lock } from "lucide-react"
+import { BrandLogo } from "@/components/brand-logo"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -100,12 +101,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fefce8] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#eef3ff] px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mb-4 text-3xl font-bold" style={{ fontFamily: "var(--font-heading)" }}>
-            <span className="text-[#f59e0b]">You</span>
-            <span className="text-[#1f2937]">Tour</span>
+          <div className="mb-4 flex justify-center">
+            <BrandLogo />
           </div>
           <CardTitle>Iniciar Sesión</CardTitle>
           <CardDescription>Ingresa tus credenciales para acceder</CardDescription>

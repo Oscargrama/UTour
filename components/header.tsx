@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, User, Users, Briefcase } from "lucide-react"
+import { Menu, User, Users, Briefcase, Search, FileText, MessageCircle, Map } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
   DropdownMenu,
@@ -10,118 +10,112 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { BrandLogo } from "@/components/brand-logo"
 
 export function Header() {
   const navigation = [
     { name: "Inicio", href: "/" },
-    { name: "Tours", href: "#tours" },
-    { name: "Sobre Mí", href: "#about" },
-    { name: "Testimonios", href: "#testimonials" },
-    { name: "Blog", href: "/blog" },
-    { name: "Contacto", href: "#contact" },
+    { name: "Experiencias", href: "#tours", icon: Map },
+    { name: "Buscar", href: "/book", icon: Search },
+    { name: "Testimonios", href: "#testimonials", icon: MessageCircle },
+    { name: "Blog", href: "/blog", icon: FileText },
+    { name: "Contacto", href: "#contact", icon: MessageCircle },
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="text-2xl font-bold" style={{ fontFamily: "var(--font-heading)" }}>
-            <span className="text-[#f59e0b]">You</span>
-            <span className="text-[#1f2937]">Tour</span>
-          </div>
+    <header className="sticky top-0 z-50 w-full border-b border-[#dce3ff] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
+      <div className="container mx-auto flex h-20 items-center justify-between px-4">
+        <Link href="/" className="flex items-center gap-2" aria-label="Inicio YouTour">
+          <BrandLogo large />
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 md:flex">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-[#f59e0b]"
-            >
-              {item.name}
-            </Link>
-          ))}
-        </nav>
-
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" className="hidden md:flex bg-transparent">
+          <Button asChild variant="ghost" className="hidden text-[#2a3868] md:flex">
             <Link href="/login">
               <User className="mr-2 h-4 w-4" />
               Iniciar Sesión
             </Link>
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="hidden bg-[#10b981] hover:bg-[#059669] md:flex">Únete al Equipo</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Trabaja con nosotros</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/auth/register-guide" className="cursor-pointer">
-                  <Users className="mr-2 h-4 w-4" />
-                  <div>
-                    <div className="font-medium">Únete como Guía</div>
-                    <div className="text-xs text-muted-foreground">Comparte tu pasión por Medellín</div>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/auth/register-ambassador" className="cursor-pointer">
-                  <Briefcase className="mr-2 h-4 w-4" />
-                  <div>
-                    <div className="font-medium">Únete como Embajador</div>
-                    <div className="text-xs text-muted-foreground">Gana comisiones por referidos</div>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button asChild className="hidden bg-[#f59e0b] hover:bg-[#fbbf24] md:flex">
-            <Link href="/book">Reservar Tour</Link>
+          <Button asChild className="hidden rounded-full px-5 md:flex">
+            <Link href="/book">Reserva ahora</Link>
           </Button>
 
-          {/* Mobile Menu */}
+          {/* Global menu (desktop + mobile) */}
           <Sheet>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-xl border-[#c9d4ff] bg-white text-[#1f3684] hover:bg-[#edf2ff]"
+              >
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
-              <nav className="flex flex-col gap-4 mt-8">
+            <SheetContent side="right" className="w-[360px] max-w-[92vw] bg-[#f8f9ff]">
+              <nav className="mt-8 flex flex-col gap-2">
                 {navigation.map((item) => (
                   <Link
-                    key={item.name}
+                    key={`${item.name}-${item.href}`}
                     href={item.href}
-                    className="text-lg font-medium text-muted-foreground hover:text-[#f59e0b]"
+                    className="rounded-lg px-4 py-3 text-lg font-medium text-[#2a3868] transition-colors hover:bg-white hover:text-[#7a2ce8]"
                   >
                     {item.name}
                   </Link>
                 ))}
-                <Button asChild variant="outline" className="mt-4 bg-transparent">
+                <div className="my-2 border-t border-[#e2e8ff]" />
+
+                <Button asChild variant="outline" className="mt-2 bg-transparent text-[#1f3684]">
                   <Link href="/login">
                     <User className="mr-2 h-4 w-4" />
                     Iniciar Sesión
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="bg-[#10b981] text-white hover:bg-[#059669]">
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="border border-[#c9d4ff] bg-white text-[#1f3684] hover:bg-[#edf2ff]">
+                      Únete al Equipo
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-72">
+                    <DropdownMenuLabel>Trabaja con nosotros</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/auth/register-guide" className="cursor-pointer">
+                        <Users className="mr-2 h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Únete como Guía</div>
+                          <div className="text-xs text-muted-foreground">Comparte tu pasión por Medellín</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/auth/register-ambassador" className="cursor-pointer">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        <div>
+                          <div className="font-medium">Únete como Embajador</div>
+                          <div className="text-xs text-muted-foreground">Gana comisiones por referidos</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button asChild variant="outline" className="bg-[#edf2ff] text-[#1f3684] hover:bg-[#dce6ff]">
                   <Link href="/auth/register-guide">
                     <Users className="mr-2 h-4 w-4" />
                     Únete como Guía
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="bg-[#3b82f6] text-white hover:bg-[#2563eb]">
+                <Button asChild variant="outline" className="bg-[#edf2ff] text-[#1f3684] hover:bg-[#dce6ff]">
                   <Link href="/auth/register-ambassador">
                     <Briefcase className="mr-2 h-4 w-4" />
                     Únete como Embajador
                   </Link>
                 </Button>
-                <Button asChild className="bg-[#f59e0b] hover:bg-[#fbbf24]">
-                  <Link href="/book">Reservar Tour</Link>
+                <Button asChild className="rounded-full">
+                  <Link href="/book">Reserva ahora</Link>
                 </Button>
               </nav>
             </SheetContent>
