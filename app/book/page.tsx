@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { MultiStepBooking } from "@/components/multi-step-booking"
@@ -20,7 +21,9 @@ export default function BookPage() {
               Elige si quieres reservar un grupo completo o compartir el viaje con otros viajeros
             </p>
           </div>
-          <MultiStepBooking />
+          <Suspense fallback={null}>
+            <MultiStepBooking />
+          </Suspense>
         </div>
       </main>
       <Footer />
