@@ -1,10 +1,9 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { MarketplaceHero } from "@/components/marketplace-hero"
-import { ToursSection } from "@/components/tours-section"
+import { ToursQuickExplore } from "@/components/tours-quick-explore"
 import { GuidesMarketplace } from "@/components/guides-marketplace"
 import { HowItWorks } from "@/components/how-it-works"
-import { TestimonialsSection } from "@/components/testimonials-section"
 import { JoinPlatform } from "@/components/join-platform"
 import { FAQSection } from "@/components/faq-section"
 import { ContactSection } from "@/components/contact-section"
@@ -17,9 +16,8 @@ export default function Home() {
       <main>
         <MarketplaceHero />
         <HowItWorks />
-        <ToursSection />
+        <ToursQuickExplore />
         <GuidesMarketplace />
-        <TestimonialsSection />
         <JoinPlatform />
         <FAQSection />
         <ContactSection />

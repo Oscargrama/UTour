@@ -13,6 +13,7 @@ import { ArrowLeft, ArrowRight, Users, Globe, User, Mail, Phone, Check } from "l
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 
 const privateTours = [
   {
@@ -44,18 +45,18 @@ const privateTours = [
     duration: "4 horas",
   },
   {
-    id: "city-tour-chiva",
-    name: "City Tour en Chiva",
-    description: "Recorrido por sitios emblemáticos en chiva típica",
-    price: 2,
-    duration: "7 horas",
-  },
-  {
     id: "tour-nocturno",
     name: "Tour Nocturno a Miradores",
     description: "Vistas nocturnas, fogata y música local",
     price: 150000,
     duration: "4 horas",
+  },
+  {
+    id: "salto-del-buey",
+    name: "Día de Aventura en Salto del Buey",
+    description: "Aventura de naturaleza y cascadas en entorno de montaña",
+    price: 280000,
+    duration: "10-12 horas",
   },
 ]
 
@@ -63,6 +64,7 @@ type Step = "mode" | "tour" | "date" | "details" | "contact" | "confirmation"
 
 export function MultiStepBooking() {
   const { toast } = useToast()
+  const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState<Step>("mode")
   const [loading, setLoading] = useState(false)
   const [bookingReference, setBookingReference] = useState("")
@@ -91,6 +93,16 @@ export function MultiStepBooking() {
       fetchAvailableGroups()
     }
   }, [formData.booking_mode, formData.tour_type, formData.date])
+
+  useEffect(() => {
+    const tourFromUrl = searchParams.get("tour")
+    if (!tourFromUrl) return
+
+    const exists = privateTours.some((tour) => tour.id === tourFromUrl)
+    if (!exists) return
+
+    setFormData((prev) => ({ ...prev, tour_type: tourFromUrl }))
+  }, [searchParams])
 
   const fetchAvailableGroups = async () => {
     const supabase = createClient()

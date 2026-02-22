@@ -24,7 +24,6 @@ const TOURS = [
   { id: "City Tour Medellín", price: 150000 },
   { id: "Tour Comuna 13", price: 100000 },
   { id: "Tour del Café", price: 230000 },
-  { id: "City Tour en Chiva", price: 130000 },
   { id: "Tour Nocturno Miradores", price: 150000 },
 ]
 

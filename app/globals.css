@@ -157,3 +157,14 @@
 .brand-gradient-bg {
   background: var(--color-brand-gradient);
 }
+
+.brand-cta-btn {
+  background: var(--color-brand-gradient);
+  color: #fff;
+  border: 0;
+  box-shadow: 0 10px 24px -12px rgba(31, 133, 212, 0.55);
+}
+
+.brand-cta-btn:hover {
+  filter: saturate(1.05) brightness(1.03);
+}

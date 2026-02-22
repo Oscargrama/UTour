@@ -30,8 +30,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#testimonials" className="text-[#c6d2ff] hover:text-[#38cbe1]">
-                  Testimonios
+                <Link href="/tours/guatape-private#resenas" className="text-[#c6d2ff] hover:text-[#38cbe1]">
+                  Reseñas
                 </Link>
               </li>
               <li>

@@ -34,16 +34,16 @@ const AVAILABLE_TOURS = [
     description: "Tour del café con cabalgata, almuerzo típico y cata de café",
   },
   {
-    id: "city-tour-chiva",
-    name: "City Tour en Chiva",
-    requiresVehicle: false,
-    description: "Recorrido en chiva por sitios emblemáticos de Medellín",
-  },
-  {
     id: "tour-nocturno",
     name: "Tour Nocturno a Miradores",
     requiresVehicle: true,
     description: "Tour nocturno a miradores con fogata y música local",
+  },
+  {
+    id: "salto-del-buey",
+    name: "Día de Aventura en Salto del Buey",
+    requiresVehicle: true,
+    description: "Experiencia de aventura en montaña y cascadas desde Medellín",
   },
 ]
 

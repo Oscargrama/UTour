@@ -18,6 +18,7 @@ const tourTypes = [
   { value: "guatape-private", label: "Tour Privado Guatapé & El Peñol" },
   { value: "medellin-walking", label: "Free Walking Tour Medellín" },
   { value: "comuna-13", label: "Tour Comuna 13" },
+  { value: "salto-del-buey", label: "Día de Aventura en Salto del Buey desde Medellín" },
   { value: "custom", label: "Tour Personalizado" },
 ]
 

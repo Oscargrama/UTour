@@ -2,16 +2,6 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Star, ExternalLink } from "lucide-react"
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-
-interface Testimonial {
-  id: string
-  name: string
-  rating: number
-  comment: string
-  tour_type: string | null
-}
 
 const GURUWALK_REVIEWS = [
   {
@@ -52,31 +42,6 @@ const GURUWALK_REVIEWS = [
 ]
 
 export function TestimonialsSection() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
-
-  useEffect(() => {
-    async function fetchTestimonials() {
-      try {
-        const supabase = createClient()
-        const { data } = await supabase
-          .from("testimonials")
-          .select("*")
-          .eq("approved", true)
-          .order("created_at", { ascending: false })
-          .limit(6)
-
-        if (data) {
-          setTestimonials(data)
-        }
-      } catch (error) {
-        console.error("[v0] Failed to fetch testimonials:", error)
-        // Silently fail - GuruWalk reviews will still show
-      }
-    }
-
-    fetchTestimonials()
-  }, [])
-
   return (
     <section id="testimonials" className="py-20 bg-white">
       <div className="container mx-auto px-4">
@@ -138,44 +103,6 @@ export function TestimonialsSection() {
             ))}
           </div>
         </div>
-
-        {testimonials.length > 0 && (
-          <>
-            <h3
-              className="text-2xl font-bold text-[#1f2937] mb-6 text-center"
-              style={{ fontFamily: "var(--font-heading)" }}
-            >
-              Más Testimonios
-            </h3>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {testimonials.map((testimonial) => (
-                <Card key={testimonial.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-5 w-5 ${
-                            i < testimonial.rating ? "fill-[#f59e0b] text-[#f59e0b]" : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-
-                    <p className="mb-4 text-muted-foreground leading-relaxed">"{testimonial.comment}"</p>
-
-                    <div className="border-t pt-4">
-                      <p className="font-semibold text-[#1f2937]">{testimonial.name}</p>
-                      {testimonial.tour_type && (
-                        <p className="text-sm text-muted-foreground">{testimonial.tour_type}</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
       </div>
     </section>
   )

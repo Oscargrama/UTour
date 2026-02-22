@@ -17,7 +17,7 @@ export function Header() {
     { name: "Inicio", href: "/" },
     { name: "Experiencias", href: "#tours", icon: Map },
     { name: "Buscar", href: "/book", icon: Search },
-    { name: "Testimonios", href: "#testimonials", icon: MessageCircle },
+    { name: "Reseñas", href: "/tours/guatape-private#resenas", icon: MessageCircle },
     { name: "Blog", href: "/blog", icon: FileText },
     { name: "Contacto", href: "#contact", icon: MessageCircle },
   ]
@@ -37,7 +37,7 @@ export function Header() {
             </Link>
           </Button>
 
-          <Button asChild className="hidden rounded-full px-5 md:flex">
+          <Button asChild className="brand-cta-btn hidden rounded-full px-5 md:flex">
             <Link href="/book">Reserva ahora</Link>
           </Button>
 
@@ -114,7 +114,7 @@ export function Header() {
                     Únete como Embajador
                   </Link>
                 </Button>
-                <Button asChild className="rounded-full">
+                <Button asChild className="brand-cta-btn rounded-full">
                   <Link href="/book">Reserva ahora</Link>
                 </Button>
               </nav>

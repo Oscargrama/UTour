@@ -18,20 +18,20 @@ export function MarketplaceHero() {
   const copy = useMemo(() => {
     if (lang === "en") {
       return {
-        eyebrow: "Handcrafted Colombian travel, powered by AI",
-        title: "Travel plans designed and booked in one flow.",
+        eyebrow: "Meet Colombia with local people",
+        title: "Travel without pressure and with more freedom, at your own pace",
         subtitle:
-          "Tell us your style, budget and group size. Our AI Orchestrator builds your itinerary and prepares checkout without friction.",
-        placeholder: "Adventure + pueblos + nightlife, $1000, 2 people...",
+          "Private or semi-private experiences designed around your style. We handle the details. You just enjoy the journey.",
+        placeholder: "AI Asisstant soon available",
         cta: "Reserve now",
       }
     }
     return {
-      eyebrow: "Viajes hechos a tu medida con IA",
-      title: "Viajes diseñados y reservados en un solo flujo.",
+      eyebrow: "Conoce Colombia con gente local",
+      title: "Viaja y conoce con mas libertad, sin prisa y a tu ritmo.",
       subtitle:
-        "Cuéntanos estilo, presupuesto y número de viajeros. Nuestro Orquestador IA arma tu itinerario y prepara checkout sin fricción.",
-      placeholder: "Aventura + pueblos + noche, 1000 USD, 2 personas...",
+        "Recorridos turisticos privados o semiprivados, con gente local, diseñados según tu estilo. Nosotros organizamos. Tú vives la experiencia.",
+      placeholder: "Asistente AI proximamente disponible",
       cta: "Reserva ahora",
     }
   }, [lang])
@@ -61,7 +61,7 @@ export function MarketplaceHero() {
                 value={copy.placeholder}
                 className="h-12 w-full rounded-xl border-0 bg-transparent px-4 text-[15px] text-[#33416f] outline-none"
               />
-              <Button asChild size="lg" className="h-12 rounded-xl px-6">
+              <Button asChild size="lg" className="brand-cta-btn h-12 rounded-xl px-6">
                 <Link href="/book">
                   {copy.cta}
                   <ArrowRight className="ml-2 h-4 w-4" />
