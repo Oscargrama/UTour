@@ -39,12 +39,30 @@ export async function Header() {
 
         <div className="flex items-center gap-3">
           {user ? (
-            <Button asChild variant="ghost" className="hidden text-[#2a3868] md:flex">
-              <Link href="/account">
-                <User className="mr-2 h-4 w-4" />
-                Hola, {displayName}
-              </Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="hidden text-[#2a3868] md:flex">
+                  <User className="mr-2 h-4 w-4" />
+                  Hola, {displayName}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/account" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/auth/signout" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    Cerrar sesión
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button asChild variant="ghost" className="hidden text-[#2a3868] md:flex">
               <Link href="/login">

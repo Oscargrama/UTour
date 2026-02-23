@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { MercadoPagoConfig, Payment } from "mercadopago"
 import { createClient } from "@supabase/supabase-js"
 import { createHmac, timingSafeEqual } from "node:crypto"
+import { Resend } from "resend"
 
 type MercadoPagoWebhookPayload = {
   action?: string
@@ -90,6 +91,82 @@ function mapPaymentStatusToBookingStatus(paymentStatus: string) {
   if (paymentStatus === "approved") return "confirmed"
   if (paymentStatus === "rejected") return "cancelled"
   return "pending"
+}
+
+function formatTourName(tourType: string) {
+  return tourType
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
+
+async function sendBookingStatusEmail(params: {
+  to: string
+  name: string
+  bookingReference: string | null
+  tourType: string
+  date: string
+  numberOfPeople: number
+  totalPrice: number | null
+  paymentStatus: string
+}) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.warn("[payments/webhook] RESEND_API_KEY missing; skipping email send")
+    return
+  }
+
+  const from = process.env.RESEND_FROM || "UTour <onboarding@resend.dev>"
+  const replyTo = process.env.RESEND_REPLY_TO || "d.oinfante@gmail.com"
+  const resend = new Resend(apiKey)
+
+  const humanTour = formatTourName(params.tourType)
+  const humanDate = new Date(`${params.date}T00:00:00`).toLocaleDateString("es-CO")
+  const totalText = params.totalPrice !== null ? `$${Number(params.totalPrice).toLocaleString("es-CO")} COP` : null
+  const supportUrl =
+    "https://api.whatsapp.com/send/?phone=573146726226&text=Hola%20UTour,%20necesito%20ayuda%20con%20mi%20reserva"
+
+  let subject = "Estado de tu reserva en UTour"
+  let heading = "Actualizamos tu reserva"
+  let body =
+    "Recibimos una actualización de tu pago. Revisa los detalles y cualquier novedad te la confirmamos por este medio."
+
+  if (params.paymentStatus === "approved") {
+    subject = "Pago confirmado - UTour"
+    heading = "Tu pago fue confirmado"
+    body = "Tu reserva quedó confirmada y ya está en gestión operativa."
+  } else if (params.paymentStatus === "rejected") {
+    subject = "Pago no completado - UTour"
+    heading = "No se pudo confirmar tu pago"
+    body = "Tu reserva no se confirmó porque el pago fue rechazado. Si quieres, te ayudamos a intentarlo de nuevo."
+  }
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:24px;color:#1f2937;">
+      <h2 style="margin:0 0 12px 0;color:#1f3684;">${heading}</h2>
+      <p style="margin:0 0 18px 0;color:#42527f;">Hola ${params.name}, ${body}</p>
+      <div style="border:1px solid #dbe6ff;border-radius:14px;padding:16px;background:#f8fbff;">
+        <p style="margin:0 0 8px 0;"><strong>Referencia:</strong> ${params.bookingReference || "-"}</p>
+        <p style="margin:0 0 8px 0;"><strong>Tour:</strong> ${humanTour}</p>
+        <p style="margin:0 0 8px 0;"><strong>Fecha:</strong> ${humanDate}</p>
+        <p style="margin:0 0 8px 0;"><strong>Personas:</strong> ${params.numberOfPeople}</p>
+        ${totalText ? `<p style="margin:0 0 8px 0;"><strong>Total:</strong> ${totalText}</p>` : ""}
+        <p style="margin:0;"><strong>Pago:</strong> ${params.paymentStatus}</p>
+      </div>
+      <p style="margin:16px 0 0 0;">
+        <a href="${supportUrl}" style="color:#1f85d4;text-decoration:none;">Contactar soporte por WhatsApp</a>
+      </p>
+    </div>
+  `
+
+  await resend.emails.send({
+    from,
+    to: [params.to],
+    replyTo,
+    subject,
+    html,
+    text: `${heading}\n\nReferencia: ${params.bookingReference || "-"}\nTour: ${humanTour}\nFecha: ${humanDate}\nPago: ${params.paymentStatus}`,
+  })
 }
 
 export async function POST(request: Request) {
@@ -192,7 +269,11 @@ export async function POST(request: Request) {
 
     const bookingStatus = mapPaymentStatusToBookingStatus(paymentStatus)
     const supabase = createClient(supabaseUrl, serviceRoleKey)
-    const bookingQuery = supabase.from("bookings").select("id, mp_payment_id, preference_id")
+    const bookingQuery = supabase
+      .from("bookings")
+      .select(
+        "id, mp_payment_id, payment_status, preference_id, booking_reference, name, email, tour_type, date, number_of_people, total_price",
+      )
     const { data: booking, error: bookingError } = preferenceId
       ? await bookingQuery.eq("preference_id", preferenceId).maybeSingle()
       : await bookingQuery.eq("id", bookingIdFallback!).maybeSingle()
@@ -233,7 +314,7 @@ export async function POST(request: Request) {
       )
     }
 
-    if (booking.mp_payment_id === paymentId) {
+    if (booking.mp_payment_id === paymentId && booking.payment_status === paymentStatus) {
       return NextResponse.json(
         {
           received: true,
@@ -278,6 +359,23 @@ export async function POST(request: Request) {
         { status: 200 },
       )
     }
+
+    // Non-blocking customer email notification.
+    try {
+      await sendBookingStatusEmail({
+        to: booking.email,
+        name: booking.name,
+        bookingReference: booking.booking_reference,
+        tourType: booking.tour_type,
+        date: booking.date,
+        numberOfPeople: booking.number_of_people,
+        totalPrice: booking.total_price,
+        paymentStatus,
+      })
+    } catch (emailError) {
+      console.error("[payments/webhook] Failed to send booking status email", emailError)
+    }
+
     return NextResponse.json(
       {
         received: true,
