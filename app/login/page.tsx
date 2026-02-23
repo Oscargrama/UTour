@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,19 +15,22 @@ type OtpStep = "email" | "code"
 
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [otpStep, setOtpStep] = useState<OtpStep>("email")
   const [email, setEmail] = useState("")
   const [code, setCode] = useState("")
+  const [nextPath, setNextPath] = useState("/account")
 
-  const nextPath = useMemo(() => {
-    const raw = searchParams.get("next")
-    if (!raw) return "/account"
-    if (!raw.startsWith("/")) return "/account"
-    return raw
-  }, [searchParams])
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const raw = new URLSearchParams(window.location.search).get("next")
+    if (!raw || !raw.startsWith("/")) {
+      setNextPath("/account")
+      return
+    }
+    setNextPath(raw)
+  }, [])
 
   useEffect(() => {
     const checkSession = async () => {
