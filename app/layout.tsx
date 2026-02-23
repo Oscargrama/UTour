@@ -6,12 +6,12 @@ import { Toaster } from "@/components/ui/toaster"
 import { AnalyticsWrapper } from "@/components/analytics-wrapper"
 
 export const metadata: Metadata = {
-  title: "YouTour - Tours Privados en Medellín y Guatapé | Experiencias Auténticas",
+  title: "UTour - Tours Privados en Medellín y Guatapé | Experiencias Auténticas",
   description:
     "Descubre Colombia con tours privados personalizados. Visita Guatapé, El Peñol y Medellín con un guía local experimentado. Tours en español e inglés.",
   keywords: "tours medellin, guatape tour, el peñol, tours privados colombia, guia turistico medellin",
   openGraph: {
-    title: "YouTour - Tours Privados en Medellín",
+    title: "UTour - Tours Privados en Medellín",
     description: "Experiencias auténticas con un guía local",
     type: "website",
   },

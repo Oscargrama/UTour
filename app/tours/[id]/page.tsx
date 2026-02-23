@@ -191,7 +191,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
               {(submittedReviews?.length ?? 0) > 0 && (
                 <div>
                   <div className="mb-4 flex items-center gap-2">
-                    <span className="text-lg font-bold text-[#1f3684]">Reseñas YouTour</span>
+                    <span className="text-lg font-bold text-[#1f3684]">Reseñas UTour</span>
                     <span className="text-sm font-medium text-muted-foreground">Aprobadas recientemente</span>
                   </div>
                   <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">

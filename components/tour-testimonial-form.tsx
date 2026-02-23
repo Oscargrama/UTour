@@ -67,7 +67,7 @@ export function TourTestimonialForm({ tourId, tourTitle }: TourTestimonialFormPr
             {tourTitle}
           </h1>
           <p className="mb-6 text-[#42527f]">
-            Gracias por viajar con YouTour. Tu reseña nos ayuda a mejorar y a dar más confianza a nuevos viajeros.
+            Gracias por viajar con UTour. Tu reseña nos ayuda a mejorar y a dar más confianza a nuevos viajeros.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">

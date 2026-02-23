@@ -57,7 +57,7 @@ export function HeroSection() {
               className="border-white text-white hover:bg-white/10 text-lg px-8 bg-transparent"
             >
               <a
-                href="https://api.whatsapp.com/send/?phone=573178494031&text=Hola%20Oscar!%20Me%20gustaría%20información%20sobre%20tours%20privados%20en%20Guatapé%20y%20Medellín."
+                href="https://api.whatsapp.com/send/?phone=573146726226&text=Hola%20UTour!%20Me%20gustaría%20información%20sobre%20tours%20privados%20en%20Guatapé%20y%20Medellín."
                 target="_blank"
                 rel="noopener noreferrer"
               >

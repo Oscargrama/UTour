@@ -21,12 +21,12 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
   if (!post) {
     return {
-      title: "Post no encontrado - YouTour",
+      title: "Post no encontrado - UTour",
     }
   }
 
   return {
-    title: `${post.title} - YouTour Blog`,
+    title: `${post.title} - UTour Blog`,
     description: post.excerpt || post.title,
     keywords: `${post.title}, viajes colombia, guia medellin, tours`,
     openGraph: {

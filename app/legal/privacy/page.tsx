@@ -10,7 +10,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-[#1f2937]">1. Introducción</h2>
             <p className="text-muted-foreground leading-relaxed">
-              YouTour se compromete a proteger su privacidad y sus datos personales. Esta política describe cómo
+              UTour se compromete a proteger su privacidad y sus datos personales. Esta política describe cómo
               recopilamos, usamos y protegemos su información personal de acuerdo con las leyes colombianas de
               protección de datos (Ley 1581 de 2012).
             </p>
@@ -113,8 +113,8 @@ export default function PrivacyPage() {
               contactarnos a través de:
             </p>
             <ul className="list-none pl-6 space-y-2 text-muted-foreground">
-              <li>Email: oscar@delabmarketing.com</li>
-              <li>WhatsApp: +57 317 849 4031</li>
+              <li>Email: d.oinfante@gmail.com</li>
+              <li>WhatsApp: +57 314 672 6226</li>
               <li>Dirección: Medellín, Colombia</li>
             </ul>
           </section>

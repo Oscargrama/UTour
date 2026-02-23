@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main>
+      <div role="main">
         <MarketplaceHero />
         <HowItWorks />
         <ToursQuickExplore />
@@ -21,7 +21,7 @@ export default function Home() {
         <JoinPlatform />
         <FAQSection />
         <ContactSection />
-      </main>
+      </div>
       <Footer />
       <WhatsAppFloatButton />
     </div>

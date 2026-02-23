@@ -118,7 +118,7 @@ export function ToursSection() {
                         className="min-w-40 border-2 border-green-500 bg-transparent text-green-600 hover:bg-green-50 hover:text-green-700"
                         onClick={() => {
                           window.open(
-                            `https://api.whatsapp.com/send/?phone=573178494031&text=Hola%20Oscar!%20Me%20interesa%20el%20${encodeURIComponent(
+                            `https://api.whatsapp.com/send/?phone=573146726226&text=Hola%20UTour!%20Me%20interesa%20el%20${encodeURIComponent(
                               tour.title,
                             )}.%20Podrías%20darme%20más%20información?`,
                             "_blank",

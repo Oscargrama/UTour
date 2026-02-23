@@ -112,7 +112,7 @@ export default async function CheckoutResultPage({
                 Volver a reservas
               </Link>
               <Link
-                href="https://api.whatsapp.com/send/?phone=573178494031&text=Hola%20YouTour,%20necesito%20ayuda%20con%20mi%20reserva"
+                href="https://api.whatsapp.com/send/?phone=573146726226&text=Hola%20UTour,%20necesito%20ayuda%20con%20mi%20reserva"
                 className="rounded-lg border px-5 py-2.5 text-sm font-semibold"
                 target="_blank"
               >

@@ -1,4 +1,4 @@
--- Seed data for YouTour
+-- Seed data for UTour
 
 -- Insert sample testimonials
 INSERT INTO testimonials (name, rating, comment, tour_type, date, approved) VALUES

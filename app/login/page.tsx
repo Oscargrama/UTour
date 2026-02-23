@@ -46,15 +46,19 @@ export default function LoginPage() {
         .eq("email", formData.email)
         .single()
 
+      let effectiveRole = userData?.role
+      let effectiveName = userData?.full_name
+
       if (userError) {
-        console.error("[v0] Error fetching user role:", userError)
-        throw new Error("No se pudo obtener el rol del usuario")
+        console.warn("[v0] User role record not found, defaulting to user role:", userError.message)
+        effectiveRole = "user"
+        effectiveName = (authData.user?.user_metadata?.full_name as string | undefined) || formData.email.split("@")[0]
       }
 
-      console.log("[v0] User role:", userData?.role)
+      console.log("[v0] User role:", effectiveRole)
 
       let redirectPath = "/admin"
-      switch (userData?.role) {
+      switch (effectiveRole) {
         case "admin":
           redirectPath = "/admin"
           break
@@ -64,14 +68,17 @@ export default function LoginPage() {
         case "ambassador":
           redirectPath = "/ambassador/dashboard"
           break
+        case "user":
+          redirectPath = "/account"
+          break
         default:
-          throw new Error("Rol de usuario no válido")
+          redirectPath = "/account"
       }
 
       console.log("[v0] Redirecting to:", redirectPath)
 
       toast({
-        title: `¡Bienvenido${userData?.full_name ? ` ${userData.full_name}` : ""}!`,
+        title: `¡Bienvenido${effectiveName ? ` ${effectiveName}` : ""}!`,
         description: "Has iniciado sesión exitosamente.",
       })
 

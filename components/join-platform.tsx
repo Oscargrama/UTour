@@ -1,82 +1,104 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Car, Users, MapPin, DollarSign, Clock, Shield } from "lucide-react"
+import { Car, CircleCheck, Sparkles, Handshake } from "lucide-react"
 import Link from "next/link"
 
 export function JoinPlatform() {
   return (
-    <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Únete a la Plataforma</h2>
-          <p className="text-xl text-muted-foreground">ingresa a la lista de espera    </p>
+    <section className="relative overflow-hidden bg-gradient-to-b from-white to-[#eef3ff] py-20">
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="absolute -left-20 top-10 h-52 w-52 rounded-full bg-[#38CBE1]/20 blur-3xl" />
+        <div className="absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-[#7A2CE8]/20 blur-3xl" />
+      </div>
+
+      <div className="container relative mx-auto px-4">
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <p className="mb-4 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#3b4a7a] shadow-sm">
+            <Sparkles className="mr-2 h-4 w-4 text-[#7a2ce8]" />
+            Colabora con UTour
+          </p>
+          <h2
+            className="bg-gradient-to-r from-[#1F3684] via-[#1F85D4] to-[#7A2CE8] bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-4xl"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            Únete a la plataforma
+          </h2>
+          <p className="mt-3 text-lg text-[#42527f]">
+            Buscamos guías y aliados que compartan nuestra visión de experiencias privadas, personalizadas y sin prisas.
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {/* Guide Card */}
-          <Card className="border-2 border-[#10b981] hover:shadow-xl transition-shadow">
-            <CardHeader className="bg-gradient-to-br from-[#10b981] to-[#059669] text-white">
+          <Card className="overflow-hidden border border-[#dfe6ff] bg-white/90 shadow-[0_22px_65px_-35px_rgba(31,54,132,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_-30px_rgba(122,44,232,0.35)]">
+            <CardHeader className="bg-gradient-to-r from-[#7A2CE8] via-[#555BDF] to-[#38CBE1] text-white">
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Car className="h-6 w-6" />
-                Guía / Rider
+                Guías Seleccionados
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <p className="text-muted-foreground">Comparte tu pasión por Medellín y genera ingresos flexibles</p>
+              <h3 className="text-lg font-semibold text-[#1f3684]">Guías certificados por UTour</h3>
+              <p className="text-[#42527f]">
+                Formamos una red selecta de guías y riders (con o sin vehiculo) que entienden que el viajero marca el
+                ritmo. No buscamos volumen. Buscamos criterio, calidez y excelencia.
+              </p>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <DollarSign className="h-5 w-5 text-[#10b981] flex-shrink-0 mt-0.5" />
-                  <span>Gana $80,000 - $500,000 COP por tour</span>
+                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
+                  <span className="text-[#1f3684]">Experiencias privadas y semiprivadas</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 text-[#10b981] flex-shrink-0 mt-0.5" />
-                  <span>Define tus horarios y disponibilidad</span>
+                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
+                  <span className="text-[#1f3684]">Estándar de calidad definido</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-[#10b981] flex-shrink-0 mt-0.5" />
-                  <span>Tours a pie o con tu vehículo</span>
+                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
+                  <span className="text-[#1f3684]">Capacitación y acompañamiento</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-[#10b981] flex-shrink-0 mt-0.5" />
-                  <span>Capacitación y certificación incluida</span>
+                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
+                  <span className="text-[#1f3684]">Trabajo por solicitud, no masivo</span>
                 </li>
               </ul>
-              <Button className="w-full bg-[#10b981] hover:bg-[#059669] rounded-full" size="lg" asChild>
-                <Link href="/auth/register-guide">Aplicar como Guía</Link>
+              <Button className="brand-cta-btn w-full rounded-full" size="lg" asChild>
+                <Link href="/auth/register-guide">Postular como guía o rider</Link>
               </Button>
             </CardContent>
           </Card>
 
-          {/* Ambassador Card */}
-          <Card className="border-2 border-[#3b82f6] hover:shadow-xl transition-shadow">
-            <CardHeader className="bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white">
+          <Card className="overflow-hidden border border-[#dfe6ff] bg-white/90 shadow-[0_22px_65px_-35px_rgba(31,54,132,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_-30px_rgba(122,44,232,0.35)]">
+            <CardHeader className="bg-gradient-to-r from-[#1F3684] via-[#1F85D4] to-[#38CBE1] text-white">
               <CardTitle className="text-2xl flex items-center gap-2">
-                <Users className="h-6 w-6" />
-                Embajador
+                <Handshake className="h-6 w-6" />
+                Aliados Estratégicos
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <p className="text-muted-foreground">Ideal para hostels, hoteles y recepcionistas de Airbnb</p>
+              <h3 className="text-lg font-semibold text-[#1f3684]">Aliados estratégicos</h3>
+              <p className="text-[#42527f]">
+                Hoteles, anfitriones y espacios que quieran ofrecer a sus huéspedes algo diferente a los tours
+                tradicionales.
+              </p>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <DollarSign className="h-5 w-5 text-[#3b82f6] flex-shrink-0 mt-0.5" />
-                  <span>10% de comisión por cada reserva</span>
+                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
+                  <span className="text-[#1f3684]">Comisión por reserva confirmada</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-[#3b82f6] flex-shrink-0 mt-0.5" />
-                  <span>Código único de referido personal</span>
+                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
+                  <span className="text-[#1f3684]">Código personalizado</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 text-[#3b82f6] flex-shrink-0 mt-0.5" />
-                  <span>Sin costo inicial, gana desde el día 1</span>
+                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
+                  <span className="text-[#1f3684]">Seguimiento transparente</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-[#3b82f6] flex-shrink-0 mt-0.5" />
-                  <span>Dashboard para rastrear tus ganancias</span>
+                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
+                  <span className="text-[#1f3684]">Experiencias que elevan su servicio</span>
                 </li>
               </ul>
-              <Button className="w-full bg-[#3b82f6] hover:bg-[#2563eb] opacity-100 rounded-full" size="lg" asChild>
-                <Link href="/auth/register-ambassador">Ser Embajador</Link>
+              <Button className="brand-cta-btn w-full rounded-full" size="lg" asChild>
+                <Link href="/auth/register-ambassador">Convertirme en aliado</Link>
               </Button>
             </CardContent>
           </Card>

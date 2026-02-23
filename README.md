@@ -1,4 +1,4 @@
-# YouTour - Landing Page
+# UTour - Landing Page
 
 Una plataforma completa para tours privados en Medellín y Guatapé, Colombia.
 

@@ -1,12 +1,12 @@
--- Multi-Role User System for YouTour
--- Roles: admin, guide, ambassador
+-- Multi-Role User System for UTour
+-- Roles: admin, guide, ambassador, user
 
 -- Users table with role-based access
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'guide', 'ambassador')),
+  role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'guide', 'ambassador', 'user')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS commissions (
 );
 
 -- Update bookings table to add guide and ambassador references
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS guide_id UUID REFERENCES guides(id);
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS ambassador_id UUID REFERENCES ambassadors(id);
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS referral_code UUID;
@@ -74,6 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_commissions_booking_id ON commissions(booking_id)
 CREATE INDEX IF NOT EXISTS idx_bookings_guide_id ON bookings(guide_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_ambassador_id ON bookings(ambassador_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_referral_code ON bookings(referral_code);
+CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
 
 -- Function to update ambassador earnings
 CREATE OR REPLACE FUNCTION update_ambassador_earnings()

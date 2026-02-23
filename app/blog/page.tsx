@@ -8,12 +8,12 @@ import { Calendar, User } from "lucide-react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Blog de Viajes - YouTour | Guías y Tips para Colombia",
+  title: "Blog de Viajes - UTour | Guías y Tips para Colombia",
   description:
     "Descubre guías locales, tips de viaje y las mejores recomendaciones para explorar Medellín, Guatapé y Colombia.",
   keywords: "blog viajes colombia, guia medellin, tips guatape, turismo colombia",
   openGraph: {
-    title: "Blog de Viajes - YouTour",
+    title: "Blog de Viajes - UTour",
     description: "Guías locales y tips para explorar Colombia",
     type: "website",
   },

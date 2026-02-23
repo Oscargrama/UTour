@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,11 +9,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, ArrowRight, Users, Globe, User, Mail, Phone, Check } from "lucide-react"
+import { ArrowLeft, ArrowRight, Users, Globe, User, Mail, Phone, Check, Loader2, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { SecurePaymentsBadge } from "@/components/secure-payments-badge"
 
 const privateTours = [
   {
@@ -61,19 +63,29 @@ const privateTours = [
 ]
 
 type Step = "mode" | "tour" | "date" | "details" | "contact" | "confirmation"
+type OtpStep = "email" | "code"
 
 export function MultiStepBooking() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
+  const preselectedTourId = searchParams.get("tour")
+  const hasPreselectedTour = !!preselectedTourId && privateTours.some((tour) => tour.id === preselectedTourId)
   const [currentStep, setCurrentStep] = useState<Step>("mode")
   const [loading, setLoading] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authError, setAuthError] = useState("")
+  const [otpStep, setOtpStep] = useState<OtpStep>("email")
+  const [otpEmail, setOtpEmail] = useState("")
+  const [otpCode, setOtpCode] = useState("")
+  const [resumeAfterAuth, setResumeAfterAuth] = useState(false)
   const [bookingReference, setBookingReference] = useState("")
   const [availableGroups, setAvailableGroups] = useState<any[]>([])
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     booking_mode: "" as "full_group" | "join_group" | "",
-    tour_type: "",
+    tour_type: hasPreselectedTour ? (preselectedTourId as string) : "",
     date: undefined as Date | undefined,
     number_of_people: "2",
     language: "spanish",
@@ -85,8 +97,38 @@ export function MultiStepBooking() {
     acceptTerms: false,
   })
 
-  const steps: Step[] = ["mode", "tour", "date", "details", "contact", "confirmation"]
+  const steps: Step[] = useMemo(
+    () =>
+      hasPreselectedTour
+        ? ["mode", "date", "details", "contact", "confirmation"]
+        : ["mode", "tour", "date", "details", "contact", "confirmation"],
+    [hasPreselectedTour],
+  )
+  const visibleSteps = useMemo(() => steps.filter((step) => step !== "confirmation"), [steps])
   const currentStepIndex = steps.indexOf(currentStep)
+
+  const DRAFT_STORAGE_KEY = "utour_booking_draft"
+  const PENDING_PAYMENT_KEY = "utour_pending_payment"
+
+  const saveBookingDraft = () => {
+    if (typeof window === "undefined") return
+    const draft = {
+      currentStep,
+      selectedGroup,
+      formData: {
+        ...formData,
+        date: formData.date ? formData.date.toISOString() : null,
+      },
+    }
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft))
+    sessionStorage.setItem(PENDING_PAYMENT_KEY, "1")
+  }
+
+  const clearBookingDraft = () => {
+    if (typeof window === "undefined") return
+    sessionStorage.removeItem(DRAFT_STORAGE_KEY)
+    sessionStorage.removeItem(PENDING_PAYMENT_KEY)
+  }
 
   useEffect(() => {
     if (formData.booking_mode === "join_group" && formData.tour_type && formData.date) {
@@ -103,6 +145,68 @@ export function MultiStepBooking() {
 
     setFormData((prev) => ({ ...prev, tour_type: tourFromUrl }))
   }, [searchParams])
+
+  useEffect(() => {
+    // If tour is preselected from URL, skip the tour step entirely.
+    if (hasPreselectedTour && currentStep === "tour") {
+      setCurrentStep("date")
+    }
+  }, [hasPreselectedTour, currentStep])
+
+  useEffect(() => {
+    const restoreBookingDraft = async () => {
+      if (typeof window === "undefined") return
+
+      const rawDraft = sessionStorage.getItem(DRAFT_STORAGE_KEY)
+      if (!rawDraft) return
+
+      try {
+        const parsed = JSON.parse(rawDraft) as {
+          currentStep?: Step
+          selectedGroup?: string | null
+          formData?: typeof formData & { date?: string | null }
+        }
+
+        if (parsed.formData) {
+          setFormData({
+            ...parsed.formData,
+            date: parsed.formData.date ? new Date(parsed.formData.date) : undefined,
+          })
+          setOtpEmail(parsed.formData.email || "")
+        }
+        if (parsed.selectedGroup) setSelectedGroup(parsed.selectedGroup)
+        if (parsed.currentStep && steps.includes(parsed.currentStep)) setCurrentStep(parsed.currentStep)
+      } catch {
+        // If draft is malformed, ignore it and continue.
+      }
+
+      const pendingPayment = sessionStorage.getItem(PENDING_PAYMENT_KEY) === "1"
+      if (!pendingPayment) return
+
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        setAuthModalOpen(false)
+        setResumeAfterAuth(true)
+      }
+    }
+
+    void restoreBookingDraft()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    // Resume payment only after restored state is actually available.
+    if (!resumeAfterAuth) return
+    if (!formData.tour_type || !formData.date || !formData.booking_mode) return
+
+    setResumeAfterAuth(false)
+    void handleSubmit()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumeAfterAuth, formData.tour_type, formData.date, formData.booking_mode])
 
   const fetchAvailableGroups = async () => {
     const supabase = createClient()
@@ -154,9 +258,7 @@ export function MultiStepBooking() {
     }
   }
 
-  const handleSubmit = async () => {
-    setLoading(true)
-
+  const submitPayment = async () => {
     try {
       const supabase = createClient()
       const selectedTour = privateTours.find((t) => t.id === formData.tour_type)
@@ -213,6 +315,8 @@ export function MultiStepBooking() {
         throw new Error("No se recibió URL de checkout de Mercado Pago")
       }
 
+      clearBookingDraft()
+
       toast({
         title: "Redirigiendo al pago",
         description: "Te estamos enviando a Mercado Pago para completar tu reserva.",
@@ -226,55 +330,260 @@ export function MultiStepBooking() {
         description: error instanceof Error ? error.message : "Hubo un problema al iniciar el pago. Intenta de nuevo.",
         variant: "destructive",
       })
+    }
+  }
+
+  const ensureAuthBeforePayment = async () => {
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    return !!user
+  }
+
+  const ensureUserProfileRecord = async () => {
+    try {
+      await fetch("/api/auth/ensure-user", {
+        method: "POST",
+      })
+    } catch (error) {
+      // Never block payment because of profile sync issues.
+      console.warn("[v0] ensure-user warning:", error)
+    }
+  }
+
+  const handleSubmit = async () => {
+    setLoading(true)
+    setAuthError("")
+    try {
+      const isAuthenticated = await ensureAuthBeforePayment()
+      if (!isAuthenticated) {
+        saveBookingDraft()
+        setOtpEmail(formData.email || "")
+        setOtpStep("email")
+        setOtpCode("")
+        setAuthModalOpen(true)
+        return
+      }
+
+      await ensureUserProfileRecord()
+      await submitPayment()
     } finally {
       setLoading(false)
     }
   }
 
+  const handleGoogleSignIn = async () => {
+    setAuthLoading(true)
+    setAuthError("")
+    try {
+      saveBookingDraft()
+      const supabase = createClient()
+      const redirectTo = `${window.location.origin}/book${formData.tour_type ? `?tour=${formData.tour_type}` : ""}`
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+        },
+      })
+      if (error) throw error
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "No se pudo iniciar sesión con Google.")
+      setAuthLoading(false)
+    }
+  }
+
+  const handleSendOtp = async () => {
+    setAuthLoading(true)
+    setAuthError("")
+    try {
+      const email = (otpEmail || formData.email || "").trim()
+      if (!email) throw new Error("Ingresa tu email para recibir el código.")
+
+      saveBookingDraft()
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOtp({ email })
+      if (error) throw error
+
+      setOtpEmail(email)
+      setOtpStep("code")
+      toast({
+        title: "Código enviado",
+        description: "Revisa tu email e ingresa el código de acceso.",
+      })
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "No se pudo enviar el código.")
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    setAuthLoading(true)
+    setAuthError("")
+    try {
+      if (!otpEmail.trim()) throw new Error("Email no válido.")
+      if (!otpCode.trim()) throw new Error("Ingresa el código de verificación.")
+
+      const supabase = createClient()
+      const { error } = await supabase.auth.verifyOtp({
+        email: otpEmail.trim(),
+        token: otpCode.trim(),
+        type: "email",
+      })
+      if (error) throw error
+
+      setAuthModalOpen(false)
+      await submitPayment()
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Código inválido o vencido.")
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
   return (
-    <section id="booking" className="py-20 bg-gradient-to-b from-white to-[#fefce8]">
+    <section id="booking" className="bg-white py-20">
+      <Dialog open={authModalOpen} onOpenChange={setAuthModalOpen}>
+        <DialogContent className="max-w-md rounded-2xl border-[#dfe6ff] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-[#1f3684]">Continúa al pago en 10 segundos</DialogTitle>
+            <DialogDescription className="text-[#42527f]">
+              Crea tu cuenta UTour para guardar tu reserva y ver su estado en tiempo real.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Button onClick={handleGoogleSignIn} disabled={authLoading} className="brand-cta-btn w-full rounded-full">
+              {authLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Conectando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Continuar con Google
+                </>
+              )}
+            </Button>
+
+            <div className="rounded-xl border border-[#dfe6ff] bg-[#f8fbff] p-4 space-y-3">
+              <Label htmlFor="otp-email" className="text-[#1f3684]">
+                Recibir código por email
+              </Label>
+              <Input
+                id="otp-email"
+                type="email"
+                value={otpEmail}
+                onChange={(event) => setOtpEmail(event.target.value)}
+                placeholder="tu@email.com"
+                disabled={authLoading || otpStep === "code"}
+              />
+
+              {otpStep === "code" && (
+                <Input
+                  id="otp-code"
+                  value={otpCode}
+                  onChange={(event) => setOtpCode(event.target.value)}
+                  placeholder="Código de 6 dígitos"
+                  disabled={authLoading}
+                />
+              )}
+
+              {otpStep === "email" ? (
+                <Button onClick={handleSendOtp} disabled={authLoading} variant="outline" className="w-full rounded-full">
+                  {authLoading ? "Enviando..." : "Enviar código"}
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button onClick={handleVerifyOtp} disabled={authLoading} className="brand-cta-btn flex-1 rounded-full">
+                    {authLoading ? "Verificando..." : "Validar y continuar"}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setOtpStep("email")
+                      setOtpCode("")
+                    }}
+                    disabled={authLoading}
+                    variant="outline"
+                    className="rounded-full"
+                  >
+                    Volver
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-[#42527f]">No te pediremos contraseña. Tu reserva no se pierde.</p>
+            {authError ? <p className="text-sm font-medium text-red-600">{authError}</p> : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="container mx-auto px-4">
         <div className="mb-12 text-center">
           <h2
-            className="mb-4 text-4xl font-bold text-[#1f2937] md:text-5xl text-balance"
+            className="mb-4 bg-gradient-to-r from-[#1F3684] via-[#1F85D4] to-[#7A2CE8] bg-clip-text text-4xl font-bold text-transparent md:text-5xl text-balance"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             Reserva Tu Aventura
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground leading-relaxed">
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-[#42527f]">
             {formData.booking_mode === "join_group"
               ? "Únete a un grupo existente y comparte el viaje"
               : "Reserva tu tour completo o comparte con otros viajeros"}
           </p>
+          {hasPreselectedTour ? (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#c9d8ff] bg-white px-4 py-2 text-sm font-semibold text-[#1f3684]">
+              <Sparkles className="h-4 w-4 text-[#7A2CE8]" />
+              Tour seleccionado: {privateTours.find((tour) => tour.id === formData.tour_type)?.name || formData.tour_type}
+            </div>
+          ) : null}
         </div>
 
         {currentStep !== "confirmation" && (
           <div className="mx-auto max-w-3xl mb-8">
             <div className="flex items-center justify-between">
-              {["Modo", "Tour", "Fecha", "Detalles", "Contacto"].map((label, index) => (
-                <div key={label} className="flex items-center">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                      index <= currentStepIndex
-                        ? "border-[#f59e0b] bg-[#f59e0b] text-white"
-                        : "border-gray-300 bg-white text-gray-400"
-                    }`}
-                  >
-                    {index < currentStepIndex ? <Check className="h-5 w-5" /> : index + 1}
-                  </div>
-                  {index < 4 && (
-                    <div className={`h-1 w-12 md:w-24 ${index < currentStepIndex ? "bg-[#f59e0b]" : "bg-gray-300"}`} />
-                  )}
-                </div>
-              ))}
+              {visibleSteps.map((step, index) => {
+                  const label =
+                    step === "mode"
+                      ? "Modo"
+                      : step === "tour"
+                        ? "Tour"
+                        : step === "date"
+                          ? "Fecha"
+                          : step === "details"
+                            ? "Detalles"
+                            : "Contacto"
+
+                  return (
+                    <div key={label} className="flex items-center">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
+                          index <= currentStepIndex
+                            ? "border-[#7A2CE8] bg-gradient-to-br from-[#7A2CE8] via-[#555BDF] to-[#38CBE1] text-white"
+                            : "border-[#cad7ff] bg-white text-[#8392ba]"
+                        }`}
+                      >
+                        {index < currentStepIndex ? <Check className="h-5 w-5" /> : index + 1}
+                      </div>
+                      {index < visibleSteps.length - 1 && (
+                        <div
+                          className={`h-1 w-12 md:w-24 ${index < currentStepIndex ? "bg-[#555BDF]" : "bg-[#d7e3ff]"}`}
+                        />
+                      )}
+                    </div>
+                  )
+                })}
             </div>
           </div>
         )}
 
         <div className="mx-auto max-w-3xl">
-          <Card>
+          <Card className="border-[#dbe6ff] shadow-[0_24px_70px_-35px_rgba(31,54,132,0.45)]">
             <CardHeader>
-              <CardTitle>
+              <CardTitle className="text-[#1f3684]">
                 {currentStep === "mode" && "¿Cómo Quieres Viajar?"}
                 {currentStep === "tour" && "Selecciona Tu Tour"}
                 {currentStep === "date" && "Elige la Fecha"}
@@ -282,7 +591,7 @@ export function MultiStepBooking() {
                 {currentStep === "contact" && "Información de Contacto"}
                 {currentStep === "confirmation" && "¡Reserva Confirmada!"}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[#5b6a97]">
                 {currentStep === "mode" && "Elige si quieres reservar un grupo completo o unirte a otros viajeros"}
                 {currentStep === "tour" && "Elige el tour que deseas realizar"}
                 {currentStep === "date" && formData.booking_mode === "join_group"
@@ -298,25 +607,29 @@ export function MultiStepBooking() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div
                     onClick={() => setFormData({ ...formData, booking_mode: "full_group" })}
-                    className={`cursor-pointer rounded-lg border-2 p-6 transition-all hover:border-[#f59e0b] ${
-                      formData.booking_mode === "full_group" ? "border-[#f59e0b] bg-[#fef3c7]" : "border-gray-200"
+                    className={`cursor-pointer rounded-2xl border-2 p-6 transition-all hover:border-[#7A2CE8] hover:shadow-md ${
+                      formData.booking_mode === "full_group"
+                        ? "border-[#7A2CE8] bg-gradient-to-br from-[#f3edff] to-[#ecf8ff]"
+                        : "border-[#d8e2ff] bg-white"
                     }`}
                   >
-                    <Users className="h-12 w-12 text-[#f59e0b] mb-4" />
-                    <h3 className="font-semibold text-lg mb-2">Reservar Grupo Completo</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <Users className="mb-4 h-12 w-12 text-[#1f85d4]" />
+                    <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Reservar Grupo Completo</h3>
+                    <p className="text-sm text-[#5b6a97]">
                       Reserva tu tour privado para tu grupo (1-4 personas). Precio fijo por el tour completo.
                     </p>
                   </div>
                   <div
                     onClick={() => setFormData({ ...formData, booking_mode: "join_group" })}
-                    className={`cursor-pointer rounded-lg border-2 p-6 transition-all hover:border-[#f59e0b] ${
-                      formData.booking_mode === "join_group" ? "border-[#f59e0b] bg-[#fef3c7]" : "border-gray-200"
+                    className={`cursor-pointer rounded-2xl border-2 p-6 transition-all hover:border-[#7A2CE8] hover:shadow-md ${
+                      formData.booking_mode === "join_group"
+                        ? "border-[#7A2CE8] bg-gradient-to-br from-[#f3edff] to-[#ecf8ff]"
+                        : "border-[#d8e2ff] bg-white"
                     }`}
                   >
-                    <User className="h-12 w-12 text-[#f59e0b] mb-4" />
-                    <h3 className="font-semibold text-lg mb-2">Unirme a un Grupo</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <User className="mb-4 h-12 w-12 text-[#1f85d4]" />
+                    <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Unirme a un Grupo</h3>
+                    <p className="text-sm text-[#5b6a97]">
                       Comparte el tour con otros viajeros. Paga solo por tu(s) silla(s). Ideal para viajeros solos o
                       parejas.
                     </p>
@@ -330,31 +643,33 @@ export function MultiStepBooking() {
                     <div
                       key={tour.id}
                       onClick={() => setFormData({ ...formData, tour_type: tour.id })}
-                      className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:border-[#f59e0b] ${
-                        formData.tour_type === tour.id ? "border-[#f59e0b] bg-[#fef3c7]" : "border-gray-200"
+                      className={`cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-[#7A2CE8] hover:shadow-md ${
+                        formData.tour_type === tour.id
+                          ? "border-[#7A2CE8] bg-gradient-to-br from-[#f3edff] to-[#ecf8ff]"
+                          : "border-[#d8e2ff] bg-white"
                       }`}
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="font-semibold text-lg">{tour.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">{tour.description}</p>
-                          <p className="text-sm text-muted-foreground mt-2">Duración: {tour.duration}</p>
+                          <h3 className="text-lg font-semibold text-[#1f3684]">{tour.name}</h3>
+                          <p className="mt-1 text-sm text-[#5b6a97]">{tour.description}</p>
+                          <p className="mt-2 text-sm text-[#5b6a97]">Duración: {tour.duration}</p>
                         </div>
                         {tour.price > 0 && (
                           <div className="text-right">
                             {formData.booking_mode === "join_group" ? (
                               <>
-                                <p className="text-2xl font-bold text-[#f59e0b]">
+                                <p className="text-2xl font-bold text-[#1f3684]">
                                   ${(tour.price / 4).toLocaleString("es-CO")}
                                 </p>
-                                <p className="text-xs text-muted-foreground">por persona</p>
+                                <p className="text-xs text-[#5b6a97]">por persona</p>
                               </>
                             ) : (
                               <>
-                                <p className="text-2xl font-bold text-[#f59e0b]">
+                                <p className="text-2xl font-bold text-[#1f3684]">
                                   ${tour.price.toLocaleString("es-CO")}
                                 </p>
-                                <p className="text-xs text-muted-foreground">COP</p>
+                                <p className="text-xs text-[#5b6a97]">COP</p>
                               </>
                             )}
                           </div>
@@ -373,7 +688,7 @@ export function MultiStepBooking() {
                       selected={formData.date}
                       onSelect={(date) => setFormData({ ...formData, date })}
                       disabled={(date) => date < new Date() || date < new Date("1900-01-01")}
-                      className="rounded-md border"
+                      className="rounded-2xl border border-[#d8e2ff]"
                     />
                   </div>
 
@@ -386,8 +701,10 @@ export function MultiStepBooking() {
                             <div
                               key={group.id}
                               onClick={() => setSelectedGroup(group.id)}
-                              className={`cursor-pointer rounded-lg border-2 p-4 transition-all hover:border-[#f59e0b] ${
-                                selectedGroup === group.id ? "border-[#f59e0b] bg-[#fef3c7]" : "border-gray-200"
+                              className={`cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-[#7A2CE8] ${
+                                selectedGroup === group.id
+                                  ? "border-[#7A2CE8] bg-gradient-to-br from-[#f3edff] to-[#ecf8ff]"
+                                  : "border-[#d8e2ff] bg-white"
                               }`}
                             >
                               <div className="flex items-center justify-between">
@@ -396,12 +713,12 @@ export function MultiStepBooking() {
                                     {group.available_seats}{" "}
                                     {group.available_seats === 1 ? "asiento disponible" : "asientos disponibles"}
                                   </p>
-                                  <p className="text-sm text-muted-foreground">
+                                  <p className="text-sm text-[#5b6a97]">
                                     Idioma: {group.language === "spanish" ? "Español" : "English"}
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <Users className="h-6 w-6 text-[#f59e0b]" />
+                                  <Users className="h-6 w-6 text-[#1f85d4]" />
                                 </div>
                               </div>
                             </div>
@@ -409,7 +726,7 @@ export function MultiStepBooking() {
                         </div>
                       ) : (
                         <div className="text-center p-6 border-2 border-dashed rounded-lg">
-                          <p className="text-muted-foreground">
+                          <p className="text-[#5b6a97]">
                             No hay grupos disponibles para esta fecha. Intenta otra fecha o reserva un grupo completo.
                           </p>
                         </div>
@@ -465,14 +782,14 @@ export function MultiStepBooking() {
                       value={formData.language}
                       onValueChange={(value) => setFormData({ ...formData, language: value })}
                     >
-                      <div className="flex items-center space-x-2 border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
+                      <div className="flex cursor-pointer items-center space-x-2 rounded-xl border border-[#d8e2ff] p-4 hover:bg-[#f7faff]">
                         <RadioGroupItem value="spanish" id="spanish" />
                         <Label htmlFor="spanish" className="flex items-center gap-2 cursor-pointer flex-1">
                           <Globe className="h-4 w-4" />
                           Español
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2 border rounded-lg p-4 cursor-pointer hover:bg-gray-50">
+                      <div className="flex cursor-pointer items-center space-x-2 rounded-xl border border-[#d8e2ff] p-4 hover:bg-[#f7faff]">
                         <RadioGroupItem value="english" id="english" />
                         <Label htmlFor="english" className="flex items-center gap-2 cursor-pointer flex-1">
                           <Globe className="h-4 w-4" />
@@ -482,7 +799,7 @@ export function MultiStepBooking() {
                     </RadioGroup>
                   </div>
 
-                  <div className="flex items-center space-x-2 border rounded-lg p-4">
+                  <div className="flex items-center space-x-2 rounded-xl border border-[#d8e2ff] p-4">
                     <Checkbox
                       id="has_minors"
                       checked={formData.has_minors}
@@ -500,7 +817,7 @@ export function MultiStepBooking() {
                   <div className="space-y-2">
                     <Label htmlFor="name">Nombre Completo del Contacto *</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <User className="absolute left-3 top-3 h-4 w-4 text-[#8090bb]" />
                       <Input
                         id="name"
                         required
@@ -515,12 +832,12 @@ export function MultiStepBooking() {
                   <div className="space-y-2">
                     <Label htmlFor="phone">Teléfono / WhatsApp *</Label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-[#8090bb]" />
                       <Input
                         id="phone"
                         type="tel"
                         required
-                        placeholder="+57 317 849 4031"
+                        placeholder="+57 314 672 6226"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="pl-10"
@@ -531,7 +848,7 @@ export function MultiStepBooking() {
                   <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-[#8090bb]" />
                       <Input
                         id="email"
                         type="email"
@@ -552,12 +869,12 @@ export function MultiStepBooking() {
                       value={formData.referral_code}
                       onChange={(e) => setFormData({ ...formData, referral_code: e.target.value })}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Si alguien te recomendó YouTour, ingresa su código aquí
+                    <p className="text-xs text-[#5b6a97]">
+                      Si alguien te recomendó UTour, ingresa su código aquí
                     </p>
                   </div>
 
-                  <div className="flex items-start space-x-2 border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start space-x-2 rounded-xl border border-[#d8e2ff] bg-[#f8fbff] p-4">
                     <Checkbox
                       id="acceptTerms"
                       checked={formData.acceptTerms}
@@ -568,7 +885,7 @@ export function MultiStepBooking() {
                       <Link
                         href="/legal/terms"
                         target="_blank"
-                        className="text-[#f59e0b] underline hover:text-[#fbbf24]"
+                        className="text-[#1f85d4] underline hover:text-[#1f3684]"
                       >
                         Términos y Condiciones
                       </Link>{" "}
@@ -576,7 +893,7 @@ export function MultiStepBooking() {
                       <Link
                         href="/legal/privacy"
                         target="_blank"
-                        className="text-[#f59e0b] underline hover:text-[#fbbf24]"
+                        className="text-[#1f85d4] underline hover:text-[#1f3684]"
                       >
                         Política de Privacidad y Protección de Datos Personales
                       </Link>
@@ -596,11 +913,11 @@ export function MultiStepBooking() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-[#1f2937] mb-2">¡Reserva Recibida!</h3>
-                    <p className="text-muted-foreground">
-                      Tu referencia de reserva es: <span className="font-bold text-[#f59e0b]">{bookingReference}</span>
+                    <p className="text-[#5b6a97]">
+                      Tu referencia de reserva es: <span className="font-bold text-[#1f3684]">{bookingReference}</span>
                     </p>
                   </div>
-                  <div className="bg-[#fef3c7] rounded-lg p-6 text-left space-y-2">
+                  <div className="space-y-2 rounded-2xl bg-gradient-to-br from-[#f3edff] to-[#ecf8ff] p-6 text-left">
                     <h4 className="font-semibold mb-4">Resumen de tu Reserva:</h4>
                     <p>
                       <strong>Tour:</strong>{" "}
@@ -619,11 +936,11 @@ export function MultiStepBooking() {
                       <strong>Contacto:</strong> {formData.name}
                     </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-[#5b6a97]">
                     Hemos enviado un correo de confirmación a <strong>{formData.email}</strong>. Te contactaremos pronto
                     para confirmar todos los detalles de tu tour.
                   </p>
-                  <Button onClick={() => window.location.reload()} className="bg-[#f59e0b] hover:bg-[#fbbf24]">
+                  <Button onClick={() => window.location.reload()} className="brand-cta-btn">
                     Hacer Otra Reserva
                   </Button>
                 </div>
@@ -635,7 +952,7 @@ export function MultiStepBooking() {
                     variant="outline"
                     onClick={goToPreviousStep}
                     disabled={currentStepIndex === 0}
-                    className="gap-2 bg-transparent"
+                    className="gap-2 border-[#c9d8ff] bg-transparent text-[#1f3684]"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Anterior
@@ -644,7 +961,7 @@ export function MultiStepBooking() {
                     <Button
                       onClick={goToNextStep}
                       disabled={!canProceed()}
-                      className="gap-2 bg-[#f59e0b] hover:bg-[#fbbf24]"
+                      className="brand-cta-btn gap-2"
                     >
                       Siguiente
                       <ArrowRight className="h-4 w-4" />
@@ -653,7 +970,7 @@ export function MultiStepBooking() {
                     <Button
                       onClick={handleSubmit}
                       disabled={!canProceed() || loading}
-                      className="gap-2 bg-[#f59e0b] hover:bg-[#fbbf24]"
+                      className="brand-cta-btn gap-2"
                     >
                       {loading ? "Procesando..." : "Confirmar Reserva"}
                     </Button>
@@ -662,6 +979,10 @@ export function MultiStepBooking() {
               )}
             </CardContent>
           </Card>
+
+          <div className="mt-4 flex justify-center">
+            <SecurePaymentsBadge />
+          </div>
         </div>
       </div>
     </section>

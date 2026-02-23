@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, User, Users, Briefcase, Search, FileText, MessageCircle, Map } from "lucide-react"
+import { Menu, User, Users, Briefcase, Search, FileText, MessageCircle, Map, CircleHelp } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
   DropdownMenu,
@@ -11,13 +11,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BrandLogo } from "@/components/brand-logo"
+import { createClient } from "@/lib/supabase/server"
 
-export function Header() {
+export async function Header() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const displayName = (user?.user_metadata?.full_name as string | undefined) || user?.email?.split("@")[0] || "Cuenta"
+
   const navigation = [
     { name: "Inicio", href: "/" },
     { name: "Experiencias", href: "#tours", icon: Map },
     { name: "Buscar", href: "/book", icon: Search },
     { name: "Reseñas", href: "/tours/guatape-private#resenas", icon: MessageCircle },
+    { name: "FAQs", href: "/faqs", icon: CircleHelp },
     { name: "Blog", href: "/blog", icon: FileText },
     { name: "Contacto", href: "#contact", icon: MessageCircle },
   ]
@@ -25,17 +33,26 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#dce3ff] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2" aria-label="Inicio YouTour">
+        <Link href="/" className="flex items-center gap-2" aria-label="Inicio UTour">
           <BrandLogo large />
         </Link>
 
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" className="hidden text-[#2a3868] md:flex">
-            <Link href="/login">
-              <User className="mr-2 h-4 w-4" />
-              Iniciar Sesión
-            </Link>
-          </Button>
+          {user ? (
+            <Button asChild variant="ghost" className="hidden text-[#2a3868] md:flex">
+              <Link href="/account">
+                <User className="mr-2 h-4 w-4" />
+                Hola, {displayName}
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" className="hidden text-[#2a3868] md:flex">
+              <Link href="/login">
+                <User className="mr-2 h-4 w-4" />
+                Iniciar Sesión
+              </Link>
+            </Button>
+          )}
 
           <Button asChild className="brand-cta-btn hidden rounded-full px-5 md:flex">
             <Link href="/book">Reserva ahora</Link>
@@ -65,12 +82,29 @@ export function Header() {
                 ))}
                 <div className="my-2 border-t border-[#e2e8ff]" />
 
-                <Button asChild variant="outline" className="mt-2 bg-transparent text-[#1f3684]">
-                  <Link href="/login">
-                    <User className="mr-2 h-4 w-4" />
-                    Iniciar Sesión
-                  </Link>
-                </Button>
+                {user ? (
+                  <>
+                    <Button asChild variant="outline" className="mt-2 bg-transparent text-[#1f3684]">
+                      <Link href="/account">
+                        <User className="mr-2 h-4 w-4" />
+                        Mi cuenta
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="bg-transparent text-[#1f3684]">
+                      <Link href="/auth/signout">
+                        <User className="mr-2 h-4 w-4" />
+                        Cerrar sesión
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <Button asChild variant="outline" className="mt-2 bg-transparent text-[#1f3684]">
+                    <Link href="/login">
+                      <User className="mr-2 h-4 w-4" />
+                      Iniciar Sesión
+                    </Link>
+                  </Button>
+                )}
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

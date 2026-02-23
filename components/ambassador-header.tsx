@@ -26,7 +26,7 @@ export default function AmbassadorHeader({ ambassadorName }: { ambassadorName: s
           <BrandLogo compact />
           <div>
           <h1 className="text-2xl font-bold text-gray-900">Bienvenido {ambassadorName}</h1>
-          <p className="text-sm text-gray-600">Panel de Embajador - YouTour</p>
+          <p className="text-sm text-gray-600">Panel de Embajador - UTour</p>
           </div>
         </div>
         <div className="flex items-center gap-3">

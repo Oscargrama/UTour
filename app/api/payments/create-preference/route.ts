@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { MercadoPagoConfig, Preference } from "mercadopago"
 import { createClient } from "@supabase/supabase-js"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 
 type BookingPayload = {
   name: string
@@ -100,6 +102,7 @@ export async function POST(request: Request) {
     }
 
     const supabaseUrl = getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL")
+    const supabaseAnonKey = getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
     const serviceRoleKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY")
     const mpAccessToken = getRequiredEnv("MERCADO_PAGO_ACCESS_TOKEN")
 
@@ -110,29 +113,89 @@ export async function POST(request: Request) {
     if (!appUrl) throw new Error("Unable to determine a valid APP_URL for Mercado Pago back_urls")
     const notificationUrl = process.env.MERCADO_PAGO_WEBHOOK_URL || `${appUrl}/api/payments/webhook`
 
+    const cookieStore = await cookies()
+    const userClient = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll() {
+          // No-op in this route handler; we only need to read session cookies.
+        },
+      },
+    })
+    const {
+      data: { user },
+    } = await userClient.auth.getUser()
+
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
-    const { data: createdBooking, error: bookingError } = await supabase
+    // Ensure users row exists before writing bookings.user_id (FK -> users.id).
+    if (user?.id) {
+      const fullName = (user.user_metadata?.full_name as string | undefined) || user.email?.split("@")[0] || "Usuario"
+      const { error: ensureUserError } = await supabase.from("users").upsert(
+        {
+          id: user.id,
+          email: user.email,
+          full_name: fullName,
+          role: "user",
+        },
+        { onConflict: "id" },
+      )
+      if (ensureUserError) {
+        console.warn("[payments/create-preference] Could not upsert users row, continuing without hard failure:", ensureUserError.message)
+      }
+    }
+
+    const bookingInsertBase = {
+      name: bookingData.name,
+      email: bookingData.email,
+      phone: bookingData.phone,
+      tour_type: bookingData.tour_type,
+      date: bookingData.date,
+      number_of_people: bookingData.number_of_people,
+      language: bookingData.language ?? "spanish",
+      has_minors: bookingData.has_minors ?? false,
+      message: bookingData.message ?? null,
+      ambassador_id: bookingData.ambassador_id ?? null,
+      referral_code: bookingData.referral_code ?? null,
+      booking_mode: bookingData.booking_mode ?? "full_group",
+      total_price,
+      status: "pending",
+      payment_status: "pending",
+    }
+
+    let { data: createdBooking, error: bookingError } = await supabase
       .from("bookings")
       .insert({
-        name: bookingData.name,
-        email: bookingData.email,
-        phone: bookingData.phone,
-        tour_type: bookingData.tour_type,
-        date: bookingData.date,
-        number_of_people: bookingData.number_of_people,
-        language: bookingData.language ?? "spanish",
-        has_minors: bookingData.has_minors ?? false,
-        message: bookingData.message ?? null,
-        ambassador_id: bookingData.ambassador_id ?? null,
-        referral_code: bookingData.referral_code ?? null,
-        booking_mode: bookingData.booking_mode ?? "full_group",
-        total_price,
-        status: "pending",
-        payment_status: "pending",
+        ...bookingInsertBase,
+        user_id: user?.id ?? null,
       })
       .select("id")
       .single()
+
+    const isMissingUserIdColumn =
+      bookingError &&
+      (bookingError.code === "PGRST204" || bookingError.message.includes("user_id column of 'bookings'"))
+
+    if (isMissingUserIdColumn) {
+      console.warn("[payments/create-preference] bookings.user_id missing, retrying without user_id")
+      const retry = await supabase.from("bookings").insert(bookingInsertBase).select("id").single()
+      createdBooking = retry.data
+      bookingError = retry.error
+    }
+
+    const isUserIdFkViolation = bookingError?.code === "23503" && bookingError?.message?.includes("bookings_user_id_fkey")
+    if (isUserIdFkViolation) {
+      console.warn("[payments/create-preference] bookings.user_id FK failed, retrying with user_id=null")
+      const retryWithoutUser = await supabase
+        .from("bookings")
+        .insert({ ...bookingInsertBase, user_id: null })
+        .select("id")
+        .single()
+      createdBooking = retryWithoutUser.data
+      bookingError = retryWithoutUser.error
+    }
 
     if (bookingError || !createdBooking) {
       return NextResponse.json(
@@ -151,7 +214,7 @@ export async function POST(request: Request) {
       items: [
         {
           id: createdBooking.id,
-          title: `Reserva YouTour - ${bookingData.tour_type}`,
+          title: `Reserva UTour - ${bookingData.tour_type}`,
           quantity: 1,
           unit_price: Number(total_price),
           currency_id: "COP",

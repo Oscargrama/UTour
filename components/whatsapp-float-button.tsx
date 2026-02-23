@@ -3,8 +3,8 @@
 import { MessageCircle } from "lucide-react"
 
 export function WhatsAppFloatButton() {
-  const whatsappNumber = "573178494031"
-  const message = encodeURIComponent("Hola Oscar! Me gustaría información sobre los tours en Medellín y Guatapé.")
+  const whatsappNumber = "573146726226"
+  const message = encodeURIComponent("Hola UTour! Me gustaría información sobre los tours en Medellín y Guatapé.")
 
   return (
     <a

@@ -5,7 +5,7 @@ export const emailTemplates = {
     date: string
     number_of_people: number
   }) => ({
-    subject: `✅ Confirmación de Reserva - YouTour`,
+    subject: `✅ Confirmación de Reserva - UTour`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -25,11 +25,11 @@ export const emailTemplates = {
           <div class="container">
             <div class="header">
               <h1>¡Reserva Confirmada!</h1>
-              <p>YouTour - Tu Aventura en Colombia</p>
+              <p>UTour - Tu Aventura en Colombia</p>
             </div>
             <div class="content">
               <h2>Hola ${data.name}!</h2>
-              <p>¡Gracias por reservar con YouTour! Hemos recibido tu solicitud de reserva.</p>
+              <p>¡Gracias por reservar con UTour! Hemos recibido tu solicitud de reserva.</p>
               
               <div class="details">
                 <h3>Detalles de tu Reserva:</h3>
@@ -53,10 +53,10 @@ export const emailTemplates = {
 
               <p>¡Nos vemos pronto en tu aventura!</p>
               
-              <p>Saludos,<br><strong>Oscar - Guía Turístico</strong><br>YouTour</p>
+              <p>Saludos,<br><strong>Oscar - Guía Turístico</strong><br>UTour</p>
             </div>
             <div class="footer">
-              <p><strong>YouTour</strong> - Medellín, Colombia</p>
+              <p><strong>UTour</strong> - Medellín, Colombia</p>
               <p>Experiencias Auténticas con un Local</p>
             </div>
           </div>
@@ -66,7 +66,7 @@ export const emailTemplates = {
     text: `
       Hola ${data.name}!
       
-      ¡Gracias por reservar con YouTour! Hemos recibido tu solicitud.
+      ¡Gracias por reservar con UTour! Hemos recibido tu solicitud.
       
       Detalles de tu Reserva:
       - Tour: ${data.tour_type}
@@ -79,12 +79,12 @@ export const emailTemplates = {
       Email: oscar@delabmarketing.com
       
       Saludos,
-      Oscar - YouTour
+      Oscar - UTour
     `,
   }),
 
   newsletterWelcome: (email: string) => ({
-    subject: "Bienvenido a YouTour Newsletter!",
+    subject: "Bienvenido a UTour Newsletter!",
     html: `
       <!DOCTYPE html>
       <html>
@@ -101,7 +101,7 @@ export const emailTemplates = {
         <body>
           <div class="container">
             <div class="header">
-              <h1>Bienvenido a YouTour!</h1>
+              <h1>Bienvenido a UTour!</h1>
             </div>
             <div class="content">
               <h2>Gracias por suscribirte!</h2>
@@ -117,10 +117,10 @@ export const emailTemplates = {
 
               <p>Mantente atento a tu inbox!</p>
               
-              <p>Saludos,<br><strong>Oscar - YouTour</strong></p>
+              <p>Saludos,<br><strong>Oscar - UTour</strong></p>
             </div>
             <div class="footer">
-              <p>YouTour - Experiencias Auténticas en Colombia</p>
+              <p>UTour - Experiencias Auténticas en Colombia</p>
               <p>WhatsApp: +57 317 849 4031 | Email: oscar@delabmarketing.com</p>
             </div>
           </div>
@@ -128,12 +128,12 @@ export const emailTemplates = {
       </html>
     `,
     text: `
-      Bienvenido a YouTour Newsletter!
+      Bienvenido a UTour Newsletter!
       
       Gracias por suscribirte. Recibirás los mejores tips de viaje, guías locales y ofertas exclusivas.
       
       Saludos,
-      Oscar - YouTour
+      Oscar - UTour
     `,
   }),
 }

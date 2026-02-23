@@ -129,7 +129,7 @@ export default function RegisterGuidePage() {
             Volver al login
           </Link>
           <CardTitle className="text-2xl font-bold">Únete como Guía</CardTitle>
-          <CardDescription>Completa el formulario para ingresar a la lista de espera de YouTour como guía turístico</CardDescription>
+          <CardDescription>Completa el formulario para ingresar a la lista de espera de UTour como guía turístico</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

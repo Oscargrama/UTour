@@ -8,7 +8,7 @@ const steps = [
   },
   {
     icon: Bot,
-    title: "YouTour AI estructura tu viaje",
+    title: "UTour AI estructura tu viaje",
     description: "Selecciona experiencias, optimiza tiempos y calcula costos.",
   },
   {

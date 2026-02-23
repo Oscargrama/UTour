@@ -20,12 +20,12 @@ export async function POST(request: Request) {
     console.log("[v0] Sending email to:", to)
 
     const { data, error } = await resend.emails.send({
-      from: "YouTour <onboarding@resend.dev>", // Resend default sender
+      from: "UTour <onboarding@resend.dev>", // Resend default sender
       to: [to],
       subject,
       html,
       text,
-      replyTo: "oscar@delabmarketing.com",
+      replyTo: "d.oinfante@gmail.com",
     })
 
     if (error) {

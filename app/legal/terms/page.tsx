@@ -8,15 +8,15 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-[#1f2937]">1. Aceptación de los Términos</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Al acceder y utilizar los servicios de YouTour, usted acepta estar sujeto a estos Términos y Condiciones.
+              Al acceder y utilizar los servicios de UTour, usted acepta estar sujeto a estos Términos y Condiciones.
               Si no está de acuerdo con alguna parte de estos términos, no debe utilizar nuestros servicios.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#1f2937]">2. Servicios de YouTour</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-[#1f2937]">2. Servicios de UTour</h2>
             <p className="text-muted-foreground leading-relaxed">
-              YouTour es una plataforma de gestión de reservas para tours turísticos en Medellín y sus alrededores.
+              UTour es una plataforma de gestión de reservas para tours turísticos en Medellín y sus alrededores.
               Facilitamos la conexión entre clientes, guías turísticos y embajadores para la prestación de servicios
               turísticos.
             </p>
@@ -50,14 +50,14 @@ export default function TermsPage() {
             <h2 className="text-2xl font-semibold mb-4 text-[#1f2937]">6. Guías Turísticos</h2>
             <p className="text-muted-foreground leading-relaxed">
               Los guías deben cumplir con todos los requisitos legales para la prestación de servicios turísticos.
-              YouTour se reserva el derecho de aprobar o rechazar solicitudes de guías según criterios internos.
+              UTour se reserva el derecho de aprobar o rechazar solicitudes de guías según criterios internos.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-[#1f2937]">7. Responsabilidades</h2>
             <p className="text-muted-foreground leading-relaxed">
-              YouTour actúa como intermediario entre clientes y proveedores de servicios turísticos. No nos hacemos
+              UTour actúa como intermediario entre clientes y proveedores de servicios turísticos. No nos hacemos
               responsables por incidentes que ocurran durante los tours, aunque trabajamos con guías profesionales y
               experimentados.
             </p>
@@ -74,8 +74,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-[#1f2937]">9. Contacto</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Para cualquier pregunta sobre estos Términos y Condiciones, puede contactarnos en oscar@delabmarketing.com
-              o al +57 317 849 4031.
+              Para cualquier pregunta sobre estos Términos y Condiciones, puede contactarnos en d.oinfante@gmail.com
+              o al +57 314 672 6226.
             </p>
           </section>
 
