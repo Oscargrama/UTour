@@ -29,7 +29,7 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
 
-      console.log("[v0] Attempting login...")
+      console.log("Attempting login...")
 
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -38,7 +38,7 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      console.log("[v0] Login successful, checking user role...")
+      console.log("Login successful, checking user role...")
 
       const { data: userData, error: userError } = await supabase
         .from("users")
@@ -50,12 +50,12 @@ export default function LoginPage() {
       let effectiveName = userData?.full_name
 
       if (userError) {
-        console.warn("[v0] User role record not found, defaulting to user role:", userError.message)
+        console.warn("User role record not found, defaulting to user role:", userError.message)
         effectiveRole = "user"
         effectiveName = (authData.user?.user_metadata?.full_name as string | undefined) || formData.email.split("@")[0]
       }
 
-      console.log("[v0] User role:", effectiveRole)
+      console.log("User role:", effectiveRole)
 
       let redirectPath = "/admin"
       switch (effectiveRole) {
@@ -75,7 +75,7 @@ export default function LoginPage() {
           redirectPath = "/account"
       }
 
-      console.log("[v0] Redirecting to:", redirectPath)
+      console.log("Redirecting to:", redirectPath)
 
       toast({
         title: `¡Bienvenido${effectiveName ? ` ${effectiveName}` : ""}!`,
@@ -84,7 +84,7 @@ export default function LoginPage() {
 
       window.location.href = redirectPath
     } catch (error: any) {
-      console.error("[v0] Login error:", error)
+      console.error("Login error:", error)
 
       let errorMessage = "Credenciales incorrectas."
 

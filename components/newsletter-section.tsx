@@ -52,7 +52,7 @@ export function NewsletterSection() {
         setEmail("")
       }
     } catch (error) {
-      console.error("[v0] Newsletter error:", error)
+      console.error("Newsletter error:", error)
       toast({
         title: "Error",
         description: "Hubo un problema. Intenta de nuevo.",

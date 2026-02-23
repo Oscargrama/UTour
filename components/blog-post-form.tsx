@@ -65,7 +65,7 @@ export function BlogPostForm() {
       router.push("/admin/blog")
       router.refresh()
     } catch (error: any) {
-      console.error("[v0] Blog post creation error:", error)
+      console.error("Blog post creation error:", error)
       toast({
         title: "Error",
         description: error.message || "No se pudo crear el post.",

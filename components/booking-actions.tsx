@@ -33,7 +33,7 @@ export function BookingActions({ bookingId, currentStatus }: BookingActionsProps
 
       router.refresh()
     } catch (error) {
-      console.error("[v0] Update status error:", error)
+      console.error("Update status error:", error)
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado",

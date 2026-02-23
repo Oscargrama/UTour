@@ -34,7 +34,7 @@ export function TestimonialActions({ testimonialId, isApproved }: TestimonialAct
 
       router.refresh()
     } catch (error) {
-      console.error("[v0] Toggle approval error:", error)
+      console.error("Toggle approval error:", error)
       toast({
         title: "Error",
         description: "No se pudo actualizar el testimonio",

@@ -3,7 +3,7 @@
 export const analytics = {
   trackEvent: (eventName: string, properties?: Record<string, any>) => {
     if (typeof window !== "undefined") {
-      console.log("[v0] Analytics event:", eventName, properties)
+      console.log("Analytics event:", eventName, properties)
 
       // Google Analytics 4
       if (window.gtag) {

@@ -324,7 +324,7 @@ export function MultiStepBooking() {
 
       window.location.href = checkoutUrl
     } catch (error) {
-      console.error("[v0] Booking error:", error)
+      console.error("Booking error:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Hubo un problema al iniciar el pago. Intenta de nuevo.",
@@ -348,7 +348,7 @@ export function MultiStepBooking() {
       })
     } catch (error) {
       // Never block payment because of profile sync issues.
-      console.warn("[v0] ensure-user warning:", error)
+      console.warn("ensure-user warning:", error)
     }
   }
 

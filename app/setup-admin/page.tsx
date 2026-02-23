@@ -48,7 +48,7 @@ export default function SetupAdminPage() {
     try {
       const supabase = createClient()
 
-      console.log("[v0] Starting signup process...")
+      console.log("Starting signup process...")
 
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
@@ -63,7 +63,7 @@ export default function SetupAdminPage() {
 
       if (error) throw error
 
-      console.log("[v0] Signup successful:", data)
+      console.log("Signup successful:", data)
 
       if (data.session) {
         // Email confirmation is disabled - user is immediately logged in
@@ -89,7 +89,7 @@ export default function SetupAdminPage() {
         }, 3000)
       }
     } catch (error: any) {
-      console.error("[v0] Signup error:", error)
+      console.error("Signup error:", error)
       toast({
         title: "Error al crear usuario",
         description: error.message || "No se pudo crear el usuario.",

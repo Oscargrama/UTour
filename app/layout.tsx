@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     description: "Experiencias auténticas con un guía local",
     type: "website",
   },
-  generator: "v0.app",
+  generator: "UTour",
   icons: {
     icon: [
       {

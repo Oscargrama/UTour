@@ -89,7 +89,7 @@ export function BookingSection() {
         message: "",
       })
     } catch (error) {
-      console.error("[v0] Booking error:", error)
+      console.error("Booking error:", error)
       toast({
         title: "Error",
         description: "Hubo un problema al enviar tu reserva. Intenta de nuevo.",
