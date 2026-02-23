@@ -4,10 +4,21 @@ import { Resend } from "resend"
 export async function POST(request: Request) {
   try {
     const resendApiKey = process.env.RESEND_API_KEY
+    const resendFrom = process.env.RESEND_FROM
+    const resendReplyTo = process.env.RESEND_REPLY_TO || "d.oinfante@gmail.com"
     if (!resendApiKey) {
       return NextResponse.json(
         {
           error: "Missing RESEND_API_KEY",
+        },
+        { status: 500 },
+      )
+    }
+    if (!resendFrom) {
+      return NextResponse.json(
+        {
+          error: "Missing RESEND_FROM",
+          details: "Define RESEND_FROM, por ejemplo: UTour <reservas@delabmarketing.com>",
         },
         { status: 500 },
       )
@@ -20,12 +31,12 @@ export async function POST(request: Request) {
     console.log("Sending email to:", to)
 
     const { data, error } = await resend.emails.send({
-      from: "UTour <onboarding@resend.dev>", // Resend default sender
+      from: resendFrom,
       to: [to],
       subject,
       html,
       text,
-      replyTo: "d.oinfante@gmail.com",
+      replyTo: resendReplyTo,
     })
 
     if (error) {

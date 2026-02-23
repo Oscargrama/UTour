@@ -111,13 +111,17 @@ async function sendBookingStatusEmail(params: {
   paymentStatus: string
 }) {
   const apiKey = process.env.RESEND_API_KEY
+  const from = process.env.RESEND_FROM
+  const replyTo = process.env.RESEND_REPLY_TO || "d.oinfante@gmail.com"
   if (!apiKey) {
     console.warn("[payments/webhook] RESEND_API_KEY missing; skipping email send")
     return
   }
+  if (!from) {
+    console.warn("[payments/webhook] RESEND_FROM missing; skipping email send")
+    return
+  }
 
-  const from = process.env.RESEND_FROM || "UTour <onboarding@resend.dev>"
-  const replyTo = process.env.RESEND_REPLY_TO || "d.oinfante@gmail.com"
   const resend = new Resend(apiKey)
 
   const humanTour = formatTourName(params.tourType)
@@ -166,6 +170,12 @@ async function sendBookingStatusEmail(params: {
     subject,
     html,
     text: `${heading}\n\nReferencia: ${params.bookingReference || "-"}\nTour: ${humanTour}\nFecha: ${humanDate}\nPago: ${params.paymentStatus}`,
+  })
+
+  console.log("[payments/webhook] Booking status email sent", {
+    to: params.to,
+    payment_status: params.paymentStatus,
+    booking_reference: params.bookingReference,
   })
 }
 
