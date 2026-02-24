@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { MarketplaceHero } from "@/components/marketplace-hero"
@@ -9,11 +10,17 @@ import { FAQSection } from "@/components/faq-section"
 import { ContactSection } from "@/components/contact-section"
 import { WhatsAppFloatButton } from "@/components/whatsapp-float-button"
 
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+}
+
 export default function Home() {
   return (
     <div className="min-h-screen">
       <Header />
-      <div role="main">
+      <main>
         <MarketplaceHero />
         <HowItWorks />
         <ToursQuickExplore />
@@ -21,7 +28,7 @@ export default function Home() {
         <JoinPlatform />
         <FAQSection />
         <ContactSection />
-      </div>
+      </main>
       <Footer />
       <WhatsAppFloatButton />
     </div>

@@ -12,10 +12,14 @@ export const metadata: Metadata = {
   description:
     "Descubre guías locales, tips de viaje y las mejores recomendaciones para explorar Medellín, Guatapé y Colombia.",
   keywords: "blog viajes colombia, guia medellin, tips guatape, turismo colombia",
+  alternates: {
+    canonical: "/blog",
+  },
   openGraph: {
     title: "Blog de Viajes - UTour",
     description: "Guías locales y tips para explorar Colombia",
     type: "website",
+    url: "/blog",
   },
 }
 

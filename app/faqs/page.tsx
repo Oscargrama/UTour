@@ -3,10 +3,50 @@ import { Footer } from "@/components/footer"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { faqSections } from "@/lib/faqs-content"
 import { Sparkles, BookOpenText } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Preguntas frecuentes sobre tours en Medellín | UTour",
+  description:
+    "Resuelve dudas sobre reservas, pagos, cancelaciones, formatos privados o semiprivados y operación de experiencias en Medellín con UTour.",
+  alternates: {
+    canonical: "/faqs",
+  },
+  openGraph: {
+    title: "Preguntas frecuentes sobre tours en Medellín | UTour",
+    description: "Todo lo que necesitas saber antes de reservar tu experiencia con UTour.",
+    url: "/faqs",
+    type: "website",
+    images: [
+      {
+        url: "/og/utour-default-1200x630.svg",
+        width: 1200,
+        height: 630,
+        alt: "UTour FAQs",
+      },
+    ],
+  },
+}
 
 export default function FAQsPage() {
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqSections.flatMap((section) =>
+      section.items.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
+        },
+      })),
+    ),
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-[#eef3ff]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }} />
       <Header />
       <main className="py-16">
         <section className="relative overflow-hidden py-10">

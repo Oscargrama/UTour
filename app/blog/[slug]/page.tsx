@@ -29,10 +29,14 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     title: `${post.title} - UTour Blog`,
     description: post.excerpt || post.title,
     keywords: `${post.title}, viajes colombia, guia medellin, tours`,
+    alternates: {
+      canonical: `/blog/${slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt || "",
       type: "article",
+      url: `/blog/${slug}`,
       images: post.image_url ? [post.image_url] : [],
     },
   }

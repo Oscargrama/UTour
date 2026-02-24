@@ -4,16 +4,39 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { AnalyticsWrapper } from "@/components/analytics-wrapper"
+import { getSiteUrl } from "@/lib/site-url"
+
+const siteUrl = getSiteUrl()
 
 export const metadata: Metadata = {
-  title: "UTour - Tours Privados en Medellín y Guatapé | Experiencias Auténticas",
+  metadataBase: new URL(siteUrl),
+  title: "U Tour - Tours Privados en Medellín y Guatapé | Viaja sin prisas. Vive de verdad.",
   description:
-    "Descubre Colombia con tours privados personalizados. Visita Guatapé, El Peñol y Medellín con un guía local experimentado. Tours en español e inglés.",
+    "Reserva tu próxima experiencia y conoce el destino a tu ritmo. Más libertad. Más conexión. Más viaje.",
   keywords: "tours medellin, guatape tour, el peñol, tours privados colombia, guia turistico medellin",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "UTour - Tours Privados en Medellín",
-    description: "Experiencias auténticas con un guía local",
+    title: "U Tour - Tours Privados en Medellín",
+    description: "Viaja sin prisas. Vive de verdad.",
     type: "website",
+    url: siteUrl,
+    siteName: "U Tour",
+    images: [
+      {
+        url: "/og/utour-default-1200x630.svg",
+        width: 1200,
+        height: 630,
+        alt: "U Tour - Viaja sin prisas. Vive de verdad.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "U Tour - Tours Privados en Medellín",
+    description: "Viaja sin prisas. Vive de verdad.",
+    images: ["/og/utour-default-1200x630.svg"],
   },
   generator: "UTour",
   icons: {
@@ -46,9 +69,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "TouristInformationCenter",
+    "@id": `${siteUrl}#organization`,
+    name: "U Tour",
+    description: "Viaja sin prisas. Vive de verdad.",
+    areaServed: "Medellín, Antioquia, Colombia",
+    telephone: "+573146726226",
+    url: siteUrl,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Estadio - Laureles",
+      addressLocality: "Medellín",
+      addressRegion: "Antioquia",
+      addressCountry: "CO",
+    },
+  }
+
   return (
     <html lang="es">
       <body className={`font-sans antialiased`}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
         <AnalyticsWrapper>{children}</AnalyticsWrapper>
         <Analytics />
         <Toaster />

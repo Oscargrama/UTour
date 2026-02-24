@@ -1,0 +1,23 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEF3FF"/>
+      <stop offset="1" stop-color="#DDF4FF"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="230" y1="120" x2="430" y2="380" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7A2CE8"/>
+      <stop offset="0.5" stop-color="#555BDF"/>
+      <stop offset="1" stop-color="#38CBE1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="985" cy="118" r="140" fill="#7A2CE8" fill-opacity="0.08"/>
+  <circle cx="108" cy="558" r="170" fill="#38CBE1" fill-opacity="0.08"/>
+  <rect x="150" y="100" width="6" height="430" rx="3" fill="#D0DBFF"/>
+  <path d="M230 120C194 120 165 149 165 185V360C165 455 242 532 337 532C432 532 509 455 509 360V185C509 149 480 120 444 120C408 120 379 149 379 185V360C379 384 361 402 337 402C313 402 295 384 295 360V185C295 149 266 120 230 120Z" fill="url(#accent)"/>
+  <text x="560" y="230" fill="#1F3684" font-family="Arial, Helvetica, sans-serif" font-size="92" font-weight="700">U Tour</text>
+  <text x="560" y="305" fill="#1F85D4" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700">Viaja sin prisas. Vive de verdad.</text>
+  <text x="560" y="370" fill="#33416F" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="500">
+    Medellín y Guatapé • Tours privados y semiprivados
+  </text>
+</svg>
