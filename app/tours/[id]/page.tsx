@@ -10,44 +10,11 @@ import { getCuratedReviewsByTourId } from "@/lib/curated-reviews"
 import { createClient } from "@/lib/supabase/server"
 import { TourMediaCarousel } from "@/components/tour-media-carousel"
 import { getSiteUrl } from "@/lib/site-url"
+import { buildTourStructuredData } from "@/lib/seo-tour-schema"
+import { buildTourMetadata, notFoundTourMetadata } from "@/lib/seo-tour-metadata"
 
 type TourDetailPageProps = {
   params: Promise<{ id: string }>
-}
-
-const touristTypeByTour: Record<string, string[]> = {
-  "guatape-private": ["couples", "families", "international-tourists"],
-  "guatape-semi-private": ["couples", "small-groups", "international-tourists"],
-  "salto-del-buey": ["adventure-seekers", "nature-lovers", "young-travelers", "small-groups"],
-  "medellin-city-experience": ["first-time-visitors", "international-tourists", "solo-travelers", "couples"],
-  "coffee-farm-experience": ["culture-lovers", "international-tourists", "families", "couples"],
-}
-
-const touristDestinationByTour: Record<string, string[]> = {
-  "city-tour-chiva": ["Medellín", "Antioquia", "Colombia"],
-  "comuna-13": ["Medellín", "Antioquia", "Colombia"],
-  "medellin-walking": ["Medellín", "Antioquia", "Colombia"],
-  "tour-nocturno": ["Medellín", "Antioquia", "Colombia"],
-  "guatape-private": ["Guatapé", "Antioquia", "Colombia"],
-  "salto-del-buey": ["La Ceja", "Antioquia", "Colombia"],
-  "tour-cafetero": ["Antioquia", "Colombia"],
-}
-
-function durationToIso(duration: string) {
-  const firstHour = Number((duration.match(/\d+/) || [4])[0])
-  if (!Number.isFinite(firstHour) || firstHour <= 0) return "PT4H"
-  return `PT${firstHour}H`
-}
-
-function fallbackTouristTypes(tourId: string) {
-  const base = touristTypeByTour[tourId] || ["travelers"]
-  return Array.from(new Set([...base, "solo-travelers", "travelers"]))
-}
-
-function fallbackTouristDestination(tourId: string, city: string) {
-  const destination = touristDestinationByTour[tourId]
-  if (destination && destination.length > 0) return destination
-  return [city || "Medellín", "Antioquia", "Colombia"]
 }
 
 export async function generateMetadata({ params }: TourDetailPageProps): Promise<Metadata> {
@@ -56,40 +23,10 @@ export async function generateMetadata({ params }: TourDetailPageProps): Promise
   const tour = getTourById(normalizedId)
 
   if (!tour) {
-    return {
-      title: "Tour no encontrado | UTour",
-      description: "La experiencia solicitada no está disponible.",
-    }
+    return notFoundTourMetadata()
   }
 
-  const description = `${tour.duration} · ${tour.groupSize} · ${tour.summary}`
-  const ogImage = tour.posterImage || tour.heroImage || "/og/utour-default-1200x630.svg"
-
-  return {
-    title: `${tour.title} en ${tour.city} | UTour`,
-    description,
-    alternates: {
-      canonical: `/tours/${tour.id}`,
-    },
-    openGraph: {
-      title: `${tour.title} en ${tour.city} | UTour`,
-      description,
-      type: "website",
-      url: `/tours/${tour.id}`,
-      images: [
-        {
-          url: ogImage,
-          alt: tour.title,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${tour.title} | UTour`,
-      description,
-      images: [ogImage],
-    },
-  }
+  return buildTourMetadata(tour)
 }
 
 export default async function TourDetailPage({ params }: TourDetailPageProps) {
@@ -102,47 +39,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
     notFound()
   }
 
-  const destinationParts = fallbackTouristDestination(tour.id, tour.city)
-  const touristTypes = fallbackTouristTypes(tour.id)
-  const itineraryItems = [...tour.includes, ...tour.experience].slice(0, 8).map((step, index) => ({
-    "@type": "ListItem",
-    position: index + 1,
-    item: {
-      "@type": "Thing",
-      name: step,
-    },
-  }))
-
-  const tourStructuredData = {
-    "@context": "https://schema.org",
-    "@type": "TouristTrip",
-    "@id": `${siteUrl}/tours/${tour.id}#touristtrip`,
-    name: tour.title,
-    description: tour.summary,
-    image: [tour.posterImage || tour.heroImage].filter(Boolean),
-    url: `${siteUrl}/tours/${tour.id}`,
-    inLanguage: ["es", "en"],
-    touristType: touristTypes,
-    timeRequired: durationToIso(tour.duration),
-    touristDestination: {
-      "@type": "Place",
-      name: destinationParts.join(", "),
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: destinationParts[0] || "Medellín",
-        addressRegion: destinationParts[1] || "Antioquia",
-        addressCountry: destinationParts[destinationParts.length - 1] || "Colombia",
-      },
-    },
-    areaServed: destinationParts.join(", "),
-    itinerary: {
-      "@type": "ItemList",
-      itemListElement: itineraryItems,
-    },
-    provider: {
-      "@id": `${siteUrl}#organization`,
-    },
-  }
+  const tourStructuredData = buildTourStructuredData(tour, siteUrl)
 
   const curatedTourReviews = getCuratedReviewsByTourId(tour.id)
   const supabase = await createClient()
