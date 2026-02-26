@@ -62,10 +62,13 @@ export default function RootLayout({
     "@type": "TouristInformationCenter",
     "@id": `${siteUrl}#organization`,
     name: "U Tour",
+    alternateName: "UTour",
     description: "Viaja sin prisas. Vive de verdad.",
     areaServed: "Medellín, Antioquia, Colombia",
     telephone: "+573146726226",
     url: siteUrl,
+    logo: `${siteUrl}/faviconU.png`,
+    image: `${siteUrl}/faviconU.png`,
     address: {
       "@type": "PostalAddress",
       streetAddress: "Estadio - Laureles",
@@ -75,10 +78,24 @@ export default function RootLayout({
     },
   }
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${siteUrl}#website`,
+    url: siteUrl,
+    name: "U Tour",
+    alternateName: "UTour",
+    inLanguage: ["es", "en"],
+    publisher: {
+      "@id": `${siteUrl}#organization`,
+    },
+  }
+
   return (
     <html lang="es">
       <body className={`font-sans antialiased`}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
         <AnalyticsWrapper>{children}</AnalyticsWrapper>
         <Analytics />
         <Toaster />
