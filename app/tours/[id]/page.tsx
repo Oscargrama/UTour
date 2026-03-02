@@ -51,6 +51,10 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
     .order("created_at", { ascending: false })
     .limit(12)
 
+  const submittedReviewsCount = submittedReviews?.length ?? 0
+  const totalReviewsCount = curatedTourReviews.length + submittedReviewsCount
+  const ratingCountDisplay = totalReviewsCount > 0 ? totalReviewsCount : tour.reviews
+
   return (
     <div className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(tourStructuredData) }} />
@@ -76,12 +80,12 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
               <div className="p-6 md:p-8">
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                   <span className="inline-flex rounded-full border border-[#cbe7ff] bg-[#eef7ff] px-3 py-1 text-xs font-semibold text-[#1f85d4]">
-                    Formato privado/semiprivado
+                    {tour.id === "guatape-private" ? "Experiencia privada · Máx. 4 personas" : "Formato privado/semiprivado"}
                   </span>
                   <div className="inline-flex items-center gap-1 rounded-full bg-[#eef7ff] px-3 py-1 text-sm">
                     <Star className="h-4 w-4 fill-[#38cbe1] text-[#1f85d4]" />
                     <span className="font-semibold text-[#1f3684]">{tour.rating}</span>
-                    <span className="text-[#1f3684]/70">({tour.reviews})</span>
+                    <span className="text-[#1f3684]/70">({ratingCountDisplay})</span>
                   </div>
                 </div>
 
@@ -138,7 +142,14 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
                 </div>
 
                 <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <p className="text-2xl font-bold text-[#1f3684]">{tour.price}</p>
+                  {tour.id === "guatape-private" ? (
+                    <div>
+                      <p className="text-2xl font-bold text-[#1f3684]">$600.000 COP</p>
+                      <p className="text-xs text-[#5b6a97]">Precio por grupo privado (hasta 4 personas)</p>
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold text-[#1f3684]">{tour.price}</p>
+                  )}
                   <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <Button asChild className="brand-cta-btn min-w-40">
                       <Link href={`/book?tour=${tour.id}`}>Agendar ahora</Link>

@@ -36,7 +36,7 @@ export const toursContent: TourContent[] = [
       "https://njjciisigpuvzekgnwzj.supabase.co/storage/v1/object/public/tour-media/tours/guatape-private/gallery2.webp",
     ],
     summary:
-      "Una salida de día completo para conocer Guatapé con flexibilidad total. Ritmo personalizado, paradas estratégicas y acompañamiento local.",
+      "Explora Guatapé y la Piedra del Peñol sin buses llenos ni itinerarios rígidos. Una experiencia íntima, flexible y diseñada a tu ritmo.",
     image: "https://njjciisigpuvzekgnwzj.supabase.co/storage/v1/object/public/tour-media/tours/guatape-private/hero.webp",
     duration: "8-10 horas",
     groupSize: "Hasta 4 personas",
