@@ -20,11 +20,12 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
 const TOURS = [
-  { id: "Tour Privado Guatapé", price: 600000 },
-  { id: "City Tour Medellín", price: 150000 },
-  { id: "Tour Comuna 13", price: 100000 },
-  { id: "Tour del Café", price: 230000 },
-  { id: "Tour Nocturno Miradores", price: 150000 },
+  { id: "Tour Privado Guatapé", price: 180000 },
+  { id: "City Tour Medellín", price: 0 },
+  { id: "Tour Comuna 13", price: 80000 },
+  { id: "Tour del Café", price: 250000 },
+  { id: "Tour Nocturno Miradores", price: 130000 },
+  { id: "Día de Aventura en Salto del Buey", price: 550000 },
 ]
 
 export default function AmbassadorBookingForm({ ambassadorId }: { ambassadorId: string }) {
@@ -153,7 +154,7 @@ export default function AmbassadorBookingForm({ ambassadorId }: { ambassadorId: 
                 <SelectContent>
                   {TOURS.map((tour) => (
                     <SelectItem key={tour.id} value={tour.id}>
-                      {tour.id} - ${tour.price.toLocaleString("es-CO")}
+                      {tour.id} - {tour.price > 0 ? `$${tour.price.toLocaleString("es-CO")}` : "Basado en propinas"}
                     </SelectItem>
                   ))}
                 </SelectContent>

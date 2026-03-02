@@ -3,6 +3,7 @@ import { MercadoPagoConfig, Preference } from "mercadopago"
 import { createClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { calculateBookingTotalCop, resolveTourPricingId } from "@/lib/pricing"
 
 type BookingPayload = {
   name: string
@@ -21,7 +22,7 @@ type BookingPayload = {
 
 type CreatePreferenceBody = {
   bookingData: BookingPayload
-  total_price: number
+  total_price?: number
 }
 
 function getErrorDetails(error: unknown) {
@@ -74,11 +75,8 @@ export async function POST(request: Request) {
   try {
     const { bookingData, total_price }: CreatePreferenceBody = await request.json()
 
-    if (!bookingData || typeof total_price !== "number" || total_price <= 0) {
-      return NextResponse.json(
-        { error: "Invalid payload. Expected bookingData and a positive total_price." },
-        { status: 400 },
-      )
+    if (!bookingData) {
+      return NextResponse.json({ error: "Invalid payload. Expected bookingData." }, { status: 400 })
     }
 
     const requiredFields: (keyof BookingPayload)[] = [
@@ -99,6 +97,27 @@ export async function POST(request: Request) {
         { error: `Missing required booking fields: ${missingFields.join(", ")}` },
         { status: 400 },
       )
+    }
+
+    if (!bookingData.booking_mode || !["full_group", "join_group"].includes(bookingData.booking_mode)) {
+      return NextResponse.json({ error: "Missing or invalid booking_mode." }, { status: 400 })
+    }
+
+    const normalizedTourId = resolveTourPricingId(bookingData.tour_type)
+    const computedTotalPrice = calculateBookingTotalCop({
+      tourId: normalizedTourId,
+      bookingMode: bookingData.booking_mode,
+      numberOfPeople: bookingData.number_of_people,
+    })
+
+    if (typeof total_price === "number" && Math.abs(total_price - computedTotalPrice) > 0) {
+      console.warn("[payments/create-preference] Client/server total mismatch", {
+        client_total: total_price,
+        server_total: computedTotalPrice,
+        tour_type: bookingData.tour_type,
+        booking_mode: bookingData.booking_mode,
+        number_of_people: bookingData.number_of_people,
+      })
     }
 
     const supabaseUrl = getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL")
@@ -151,7 +170,7 @@ export async function POST(request: Request) {
       name: bookingData.name,
       email: bookingData.email,
       phone: bookingData.phone,
-      tour_type: bookingData.tour_type,
+      tour_type: normalizedTourId,
       date: bookingData.date,
       number_of_people: bookingData.number_of_people,
       language: bookingData.language ?? "spanish",
@@ -160,7 +179,7 @@ export async function POST(request: Request) {
       ambassador_id: bookingData.ambassador_id ?? null,
       referral_code: bookingData.referral_code ?? null,
       booking_mode: bookingData.booking_mode ?? "full_group",
-      total_price,
+      total_price: computedTotalPrice,
       status: "pending",
       payment_status: "pending",
     }
@@ -210,13 +229,13 @@ export async function POST(request: Request) {
     const mpClient = new MercadoPagoConfig({ accessToken: mpAccessToken })
     const preferenceClient = new Preference(mpClient)
 
-    const preferenceBody: Record<string, unknown> = {
+    const preferenceBody: any = {
       items: [
         {
           id: createdBooking.id,
-          title: `Reserva UTour - ${bookingData.tour_type}`,
+          title: `Reserva UTour - ${normalizedTourId}`,
           quantity: 1,
-          unit_price: Number(total_price),
+          unit_price: Number(computedTotalPrice),
           currency_id: "COP",
         },
       ],

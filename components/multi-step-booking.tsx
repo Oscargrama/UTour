@@ -16,51 +16,54 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SecurePaymentsBadge } from "@/components/secure-payments-badge"
+import {
+  calculateBookingTotalCop,
+  getPrivateGroupPriceCop,
+  getTourPricing,
+  resolveTourPricingId,
+  toUsdFromCop,
+} from "@/lib/pricing"
 
 const privateTours = [
   {
     id: "guatape-private",
     name: "Tour Privado Guatapé & El Peñol",
     description: "Visita la piedra, el pueblo colorido y paseo en lancha",
-    price: 600000,
     duration: "10-12 horas",
   },
   {
-    id: "custom-private",
-    name: "Tour Privado Personalizado",
-    description: "Diseña tu propia aventura en Medellín y alrededores",
-    price: 0,
-    duration: "Flexible",
-  },
-  {
-    id: "tour-comuna-13",
+    id: "comuna-13",
     name: "Tour Comuna 13",
     description: "Descubre la transformación de la Comuna 13 con arte urbano y graffiti",
-    price: 100000,
     duration: "4 horas",
   },
   {
     id: "tour-cafetero",
     name: "Tour del Café en Finca Típica",
     description: "Proceso completo del café, cabalgata, almuerzo y cata",
-    price: 230000,
     duration: "4 horas",
   },
   {
     id: "tour-nocturno",
     name: "Tour Nocturno a Miradores",
     description: "Vistas nocturnas, fogata y música local",
-    price: 150000,
     duration: "4 horas",
   },
   {
     id: "salto-del-buey",
     name: "Día de Aventura en Salto del Buey",
     description: "Aventura de naturaleza y cascadas en entorno de montaña",
-    price: 280000,
     duration: "10-12 horas",
   },
 ]
+
+function formatCop(value: number) {
+  return `$${value.toLocaleString("es-CO")} COP`
+}
+
+function formatUsd(valueInCop: number) {
+  return `USD ${toUsdFromCop(valueInCop).toLocaleString("en-US", { maximumFractionDigits: 2 })}`
+}
 
 type Step = "mode" | "tour" | "date" | "details" | "contact" | "confirmation"
 type OtpStep = "email" | "code"
@@ -68,7 +71,7 @@ type OtpStep = "email" | "code"
 export function MultiStepBooking() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
-  const preselectedTourId = searchParams.get("tour")
+  const preselectedTourId = resolveTourPricingId(searchParams.get("tour") ?? "")
   const hasPreselectedTour = !!preselectedTourId && privateTours.some((tour) => tour.id === preselectedTourId)
   const [currentStep, setCurrentStep] = useState<Step>("mode")
   const [loading, setLoading] = useState(false)
@@ -85,7 +88,7 @@ export function MultiStepBooking() {
 
   const [formData, setFormData] = useState({
     booking_mode: "" as "full_group" | "join_group" | "",
-    tour_type: hasPreselectedTour ? (preselectedTourId as string) : "",
+    tour_type: hasPreselectedTour ? preselectedTourId : "",
     date: undefined as Date | undefined,
     number_of_people: "2",
     language: "spanish",
@@ -140,10 +143,11 @@ export function MultiStepBooking() {
     const tourFromUrl = searchParams.get("tour")
     if (!tourFromUrl) return
 
-    const exists = privateTours.some((tour) => tour.id === tourFromUrl)
+    const normalizedTourFromUrl = resolveTourPricingId(tourFromUrl)
+    const exists = privateTours.some((tour) => tour.id === normalizedTourFromUrl)
     if (!exists) return
 
-    setFormData((prev) => ({ ...prev, tour_type: tourFromUrl }))
+    setFormData((prev) => ({ ...prev, tour_type: normalizedTourFromUrl }))
   }, [searchParams])
 
   useEffect(() => {
@@ -279,8 +283,11 @@ export function MultiStepBooking() {
       }
 
       const peopleCount = Number.parseInt(formData.number_of_people)
-      const totalPrice =
-        formData.booking_mode === "join_group" ? Math.round((selectedTour.price / 4) * peopleCount) : selectedTour.price
+      const totalPrice = calculateBookingTotalCop({
+        tourId: selectedTour.id,
+        bookingMode: formData.booking_mode as "full_group" | "join_group",
+        numberOfPeople: peopleCount,
+      })
 
       const bookingData = {
         name: formData.name,
@@ -616,7 +623,7 @@ export function MultiStepBooking() {
                     <Users className="mb-4 h-12 w-12 text-[#1f85d4]" />
                     <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Reservar Grupo Completo</h3>
                     <p className="text-sm text-[#5b6a97]">
-                      Reserva tu tour privado para tu grupo (1-4 personas). Precio fijo por el tour completo.
+                      Reserva privada para tu grupo (1-4 personas). Se cobra 4 plazas con 20% de descuento.
                     </p>
                   </div>
                   <div
@@ -630,8 +637,7 @@ export function MultiStepBooking() {
                     <User className="mb-4 h-12 w-12 text-[#1f85d4]" />
                     <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Unirme a un Grupo</h3>
                     <p className="text-sm text-[#5b6a97]">
-                      Comparte el tour con otros viajeros. Paga solo por tu(s) silla(s). Ideal para viajeros solos o
-                      parejas.
+                      Comparte el tour con otros viajeros y paga valor por persona según cuántos viajan contigo.
                     </p>
                   </div>
                 </div>
@@ -655,25 +661,40 @@ export function MultiStepBooking() {
                           <p className="mt-1 text-sm text-[#5b6a97]">{tour.description}</p>
                           <p className="mt-2 text-sm text-[#5b6a97]">Duración: {tour.duration}</p>
                         </div>
-                        {tour.price > 0 && (
-                          <div className="text-right">
-                            {formData.booking_mode === "join_group" ? (
+                        <div className="text-right">
+                          {(() => {
+                            const pricing = getTourPricing(tour.id)
+                            if (!pricing) return null
+
+                            if (pricing.model === "tips_based") {
+                              return (
+                                <>
+                                  <p className="text-base font-bold text-[#1f3684]">Basado en propinas</p>
+                                  <p className="text-xs text-[#5b6a97]">No aplica checkout fijo</p>
+                                </>
+                              )
+                            }
+
+                            if (formData.booking_mode === "join_group") {
+                              return (
+                                <>
+                                  <p className="text-lg font-bold text-[#1f3684]">{formatCop(pricing.copPerPerson)}</p>
+                                  <p className="text-xs text-[#5b6a97]">por persona ({formatUsd(pricing.copPerPerson)})</p>
+                                </>
+                              )
+                            }
+
+                            const privateGroupPrice = getPrivateGroupPriceCop(tour.id)
+                            if (!privateGroupPrice) return null
+
+                            return (
                               <>
-                                <p className="text-2xl font-bold text-[#1f3684]">
-                                  ${(tour.price / 4).toLocaleString("es-CO")}
-                                </p>
-                                <p className="text-xs text-[#5b6a97]">por persona</p>
+                                <p className="text-lg font-bold text-[#1f3684]">{formatCop(privateGroupPrice)}</p>
+                                <p className="text-xs text-[#5b6a97]">grupo privado ({formatUsd(privateGroupPrice)})</p>
                               </>
-                            ) : (
-                              <>
-                                <p className="text-2xl font-bold text-[#1f3684]">
-                                  ${tour.price.toLocaleString("es-CO")}
-                                </p>
-                                <p className="text-xs text-[#5b6a97]">COP</p>
-                              </>
-                            )}
-                          </div>
-                        )}
+                            )
+                          })()}
+                        </div>
                       </div>
                     </div>
                   ))}
