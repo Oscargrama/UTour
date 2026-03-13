@@ -206,7 +206,7 @@ export const toursContent: TourContent[] = [
     posterImage: "https://njjciisigpuvzekgnwzj.supabase.co/storage/v1/object/public/tour-media/tours/salto-del-buey/poster.webp",
     gallery: ["https://njjciisigpuvzekgnwzj.supabase.co/storage/v1/object/public/tour-media/tours/salto-del-buey/gallery1.webp"],
     summary:
-      "Escapada de aventura para conectar con naturaleza en un entorno de cascadas, montaña y senderos fuera del circuito urbano.",
+      "Vive una escapada de aventura para conectar con naturaleza en un entorno de cascadas, montaña y senderos fuera del circuito urbano.",
     image: "/tours/salto-del-buey/hero.jpg",
     duration: "10-12 horas",
     groupSize: "Privado o semiprivado",

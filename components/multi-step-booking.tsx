@@ -73,7 +73,6 @@ export function MultiStepBooking() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
   const preselectedTourId = resolveTourPricingId(searchParams.get("tour") ?? "")
-  const hasPreselectedTour = !!preselectedTourId && privateTours.some((tour) => tour.id === preselectedTourId)
   const [currentStep, setCurrentStep] = useState<Step>("mode")
   const [loading, setLoading] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -86,10 +85,11 @@ export function MultiStepBooking() {
   const [bookingReference, setBookingReference] = useState("")
   const [availableGroups, setAvailableGroups] = useState<any[]>([])
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
+  const [isTourLocked, setIsTourLocked] = useState(false)
 
   const [formData, setFormData] = useState({
     booking_mode: "" as "full_group" | "join_group" | "",
-    tour_type: hasPreselectedTour ? preselectedTourId : "",
+    tour_type: "",
     date: undefined as Date | undefined,
     number_of_people: "2",
     language: "spanish",
@@ -103,10 +103,10 @@ export function MultiStepBooking() {
 
   const steps: Step[] = useMemo(
     () =>
-      hasPreselectedTour
+      isTourLocked
         ? ["mode", "date", "details", "contact", "confirmation"]
         : ["mode", "tour", "date", "details", "contact", "confirmation"],
-    [hasPreselectedTour],
+    [isTourLocked],
   )
   const visibleSteps = useMemo(() => steps.filter((step) => step !== "confirmation"), [steps])
   const currentStepIndex = steps.indexOf(currentStep)
@@ -141,22 +141,21 @@ export function MultiStepBooking() {
   }, [formData.booking_mode, formData.tour_type, formData.date])
 
   useEffect(() => {
-    const tourFromUrl = searchParams.get("tour")
-    if (!tourFromUrl) return
+    if (!preselectedTourId) return
 
-    const normalizedTourFromUrl = resolveTourPricingId(tourFromUrl)
-    const exists = privateTours.some((tour) => tour.id === normalizedTourFromUrl)
+    const exists = privateTours.some((tour) => tour.id === preselectedTourId)
     if (!exists) return
 
-    setFormData((prev) => ({ ...prev, tour_type: normalizedTourFromUrl }))
-  }, [searchParams])
+    setFormData((prev) => ({ ...prev, tour_type: preselectedTourId }))
+    setIsTourLocked(true)
+  }, [preselectedTourId])
 
   useEffect(() => {
     // If tour is preselected from URL, skip the tour step entirely.
-    if (hasPreselectedTour && currentStep === "tour") {
+    if (isTourLocked && currentStep === "tour") {
       setCurrentStep("date")
     }
-  }, [hasPreselectedTour, currentStep])
+  }, [isTourLocked, currentStep])
 
   useEffect(() => {
     const restoreBookingDraft = async () => {
@@ -542,7 +541,7 @@ export function MultiStepBooking() {
               ? "Únete a un grupo existente y comparte el viaje"
               : "Reserva tu tour completo o comparte con otros viajeros"}
           </p>
-          {hasPreselectedTour ? (
+          {isTourLocked ? (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#c9d8ff] bg-white px-4 py-2 text-sm font-semibold text-[#1f3684]">
               <Sparkles className="h-4 w-4 text-[#7A2CE8]" />
               Tour seleccionado: {privateTours.find((tour) => tour.id === formData.tour_type)?.name || formData.tour_type}
