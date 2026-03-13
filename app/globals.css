@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "react-international-phone/style.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -167,4 +168,31 @@
 
 .brand-cta-btn:hover {
   filter: saturate(1.05) brightness(1.03);
+}
+
+.utour-phone-input .react-international-phone-input-container {
+  border: 1px solid #d8e2ff;
+  border-radius: 0.75rem;
+  background: #fff;
+  padding: 0;
+  min-height: 2.75rem;
+}
+
+.utour-phone-input .react-international-phone-country-selector-button {
+  border: 0;
+  background: transparent;
+  padding-left: 0.75rem;
+  padding-right: 0.5rem;
+}
+
+.utour-phone-input .react-international-phone-input {
+  border: 0;
+  padding: 0.75rem 0.75rem 0.75rem 0.25rem;
+  font-size: 0.95rem;
+  color: #1f2937;
+  width: 100%;
+}
+
+.utour-phone-input .react-international-phone-input:focus {
+  outline: none;
 }

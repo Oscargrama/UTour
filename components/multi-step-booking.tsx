@@ -9,13 +9,14 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, ArrowRight, Users, Globe, User, Mail, Phone, Check, Loader2, Sparkles } from "lucide-react"
+import { ArrowLeft, ArrowRight, Users, Globe, User, Mail, Check, Loader2, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SecurePaymentsBadge } from "@/components/secure-payments-badge"
+import { PhoneInput } from "react-international-phone"
 import {
   calculateBookingTotalCop,
   getPrivateGroupPriceCop,
@@ -603,7 +604,7 @@ export function MultiStepBooking() {
                 {currentStep === "tour" && "Elige el tour que deseas realizar"}
                 {currentStep === "date" && formData.booking_mode === "join_group"
                   ? "Selecciona la fecha y únete a un grupo existente"
-                  : "Selecciona la fecha preferida para tomar tu tour. "}
+                  : " Selecciona la fecha preferida para tomar tu tour. "}
                 {currentStep === "details" && "Cuéntanos sobre tu grupo"}
                 {currentStep === "contact" && " ¿Cómo te contactamos?"}
                 {currentStep === "confirmation" && "Tu reserva ha sido recibida"}
@@ -852,16 +853,16 @@ export function MultiStepBooking() {
 
                   <div className="space-y-2">
                     <Label htmlFor="phone">Teléfono / WhatsApp *</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-[#8090bb]" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        required
-                        placeholder="+57 314 672 6226"
+                    <div className="utour-phone-input">
+                      <PhoneInput
+                        defaultCountry="co"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="pl-10"
+                        onChange={(phone) => setFormData({ ...formData, phone })}
+                        inputProps={{
+                          id: "phone",
+                          required: true,
+                          placeholder: "+57 314 672 6226",
+                        }}
                       />
                     </div>
                   </div>
