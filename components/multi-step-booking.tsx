@@ -623,7 +623,7 @@ export function MultiStepBooking() {
                     <Users className="mb-4 h-12 w-12 text-[#1f85d4]" />
                     <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Reservar Grupo Completo - Privado</h3>
                     <p className="text-sm text-[#5b6a97]">
-                      Reserva privada para tu grupo (1-4 personas). Se cobra 4 plazas con 20% de descuento.
+                      Disfruta el tour solo con tu grupo (1-4 personas). Las 4 plazas se reservan completas con 20% de descuento.
                     </p>
                   </div>
                   <div
