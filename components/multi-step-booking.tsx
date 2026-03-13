@@ -603,9 +603,9 @@ export function MultiStepBooking() {
                 {currentStep === "tour" && "Elige el tour que deseas realizar"}
                 {currentStep === "date" && formData.booking_mode === "join_group"
                   ? "Selecciona la fecha y únete a un grupo existente"
-                  : "Selecciona la fecha preferida para tu tour"}
+                  : "Selecciona la fecha preferida para tomar tu tour. "}
                 {currentStep === "details" && "Cuéntanos sobre tu grupo"}
-                {currentStep === "contact" && "¿Cómo te contactamos?"}
+                {currentStep === "contact" && " ¿Cómo te contactamos?"}
                 {currentStep === "confirmation" && "Tu reserva ha sido recibida"}
               </CardDescription>
             </CardHeader>
@@ -621,7 +621,7 @@ export function MultiStepBooking() {
                     }`}
                   >
                     <Users className="mb-4 h-12 w-12 text-[#1f85d4]" />
-                    <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Reservar Grupo Completo</h3>
+                    <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Reservar Grupo Completo - Privado</h3>
                     <p className="text-sm text-[#5b6a97]">
                       Reserva privada para tu grupo (1-4 personas). Se cobra 4 plazas con 20% de descuento.
                     </p>
