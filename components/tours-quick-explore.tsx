@@ -39,10 +39,12 @@ export function ToursQuickExplore() {
 
   const tagsForFilter = useMemo(
     () =>
-      Object.entries(tourTags).map(([id, labels]) => ({
-        id: id as TourTagId,
-        ...labels,
-      })),
+      Object.entries(tourTags)
+        .filter(([id]) => id !== "party" && id !== "local-food")
+        .map(([id, labels]) => ({
+          id: id as TourTagId,
+          ...labels,
+        })),
     [],
   )
 
@@ -67,7 +69,7 @@ export function ToursQuickExplore() {
             Explora rápido todas las experiencias
           </h2>
           <p className="max-w-2xl text-[#42527f]">
-            Revisa cada tour en segundos. Si ya te gustó uno, agenda directo. Si quieres detalle, ábrelo en su página.
+            Revisa cada tour en segundos. Si ya te gustó uno, agenda directo. Si quieres detalle, ábrelo en su propia página.
           </p>
         </div>
 

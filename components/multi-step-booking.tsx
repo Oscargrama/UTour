@@ -599,7 +599,7 @@ export function MultiStepBooking() {
                 {currentStep === "confirmation" && "¡Reserva Confirmada!"}
               </CardTitle>
               <CardDescription className="text-[#5b6a97]">
-                {currentStep === "mode" && "Elige si quieres reservar un grupo completo o unirte a otros viajeros"}
+                {currentStep === "mode" && "Elige si quieres reservar un grupo completo o unirte a otros viajeros. "}
                 {currentStep === "tour" && "Elige el tour que deseas realizar"}
                 {currentStep === "date" && formData.booking_mode === "join_group"
                   ? "Selecciona la fecha y únete a un grupo existente"
