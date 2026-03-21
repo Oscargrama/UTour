@@ -4,6 +4,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { WhatsAppFloatButton } from "@/components/whatsapp-float-button"
 import { createClient } from "@supabase/supabase-js"
+import { PriceAmount } from "@/components/price-amount"
 
 export const dynamic = "force-dynamic"
 
@@ -131,7 +132,7 @@ export default async function CheckoutResultPage({
                   </p>
                   {booking.total_price !== null && (
                     <p>
-                      <strong>Total:</strong> ${Number(booking.total_price).toLocaleString("es-CO")} COP
+                      <strong>Total:</strong> <PriceAmount amountCop={Number(booking.total_price)} />
                     </p>
                   )}
                   <p>

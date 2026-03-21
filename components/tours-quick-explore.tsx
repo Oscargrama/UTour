@@ -18,6 +18,9 @@ import {
   Utensils,
 } from "lucide-react"
 import { getToursOrderedByDemand } from "@/lib/tours-content"
+import { getTourPricing } from "@/lib/pricing"
+import { formatCurrencyFromCop } from "@/lib/currency"
+import { useCurrency } from "@/components/currency-provider"
 import { tourTags, type TourTagId } from "@/lib/tour-tags"
 
 function TagIcon({ tag }: { tag: TourTagId }) {
@@ -36,6 +39,7 @@ export function ToursQuickExplore() {
   const tours = getToursOrderedByDemand()
   const [selectedTag, setSelectedTag] = useState<TourTagId | "all">("all")
   const [selectedCity, setSelectedCity] = useState<string>("all")
+  const { currency, rates } = useCurrency()
 
   const tagsForFilter = useMemo(
     () =>
@@ -187,7 +191,13 @@ export function ToursQuickExplore() {
                 </div>
 
                 <div className="inline-flex rounded-full bg-[#eef6ff] px-2.5 py-1 text-xs font-semibold text-[#1f3684]">
-                  {tour.price}
+                  {(() => {
+                    const pricing = getTourPricing(tour.id)
+                    if (!pricing) return tour.price
+                    if (pricing.model === "tips_based") return "Basado en propinas"
+                    const value = pricing.copPerPerson
+                    return `${formatCurrencyFromCop(value, currency, rates)} / persona`
+                  })()}
                 </div>
 
                 <div className="flex gap-2">

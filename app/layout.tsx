@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
-import { AnalyticsWrapper } from "@/components/analytics-wrapper"
+import { AppProviders } from "@/components/app-providers"
 import { getSiteUrl } from "@/lib/site-url"
 
 const siteUrl = getSiteUrl()
@@ -96,7 +96,7 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
-        <AnalyticsWrapper>{children}</AnalyticsWrapper>
+        <AppProviders>{children}</AppProviders>
         <Analytics />
         <Toaster />
       </body>

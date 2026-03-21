@@ -3,12 +3,16 @@
 import { Button } from "@/components/ui/button"
 import { Clock, MapPin, MessageCircle, Star, Users } from "lucide-react"
 import { toursContent } from "@/lib/tours-content"
+import { getTourPricing } from "@/lib/pricing"
+import { formatCurrencyFromCop } from "@/lib/currency"
+import { useCurrency } from "@/components/currency-provider"
 
 const handleBookingClick = (tourId: string) => {
   window.location.href = `/book?tour=${tourId}`
 }
 
 export function ToursSection() {
+  const { currency, rates } = useCurrency()
   return (
     <section id="tours" className="py-20 bg-gradient-to-b from-[#f5f8ff] to-white">
       <div className="container mx-auto px-4">
@@ -108,7 +112,14 @@ export function ToursSection() {
                   </div>
 
                   <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-2xl font-bold text-[#1f3684]">{tour.price}</p>
+                    <p className="text-2xl font-bold text-[#1f3684]">
+                      {(() => {
+                        const pricing = getTourPricing(tour.id)
+                        if (!pricing) return tour.price
+                        if (pricing.model === "tips_based") return "Basado en propinas"
+                        return `${formatCurrencyFromCop(pricing.copPerPerson, currency, rates)} / persona`
+                      })()}
+                    </p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Button onClick={() => handleBookingClick(tour.id)} className="brand-cta-btn min-w-40">
                         Reservar Ahora

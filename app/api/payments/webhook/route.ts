@@ -110,14 +110,23 @@ async function sendBookingStatusEmail(params: {
   totalPrice: number | null
   paymentStatus: string
 }) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/8b92589e-f5b9-4055-9401-c94eea722f4a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'webhook:sendBookingStatusEmail:entry',message:'sendBookingStatusEmail called',data:{to:params.to,paymentStatus:params.paymentStatus},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+  // #endregion
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.RESEND_FROM
   const replyTo = process.env.RESEND_REPLY_TO || "d.oinfante@gmail.com"
   if (!apiKey) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/8b92589e-f5b9-4055-9401-c94eea722f4a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'webhook:sendBookingStatusEmail:skipEnv',message:'skipping email - env missing',data:{hasApiKey:!!apiKey,hasFrom:!!from},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     console.warn("[payments/webhook] RESEND_API_KEY missing; skipping email send")
     return
   }
   if (!from) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/8b92589e-f5b9-4055-9401-c94eea722f4a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'webhook:sendBookingStatusEmail:skipEnv',message:'skipping email - RESEND_FROM missing',data:{},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     console.warn("[payments/webhook] RESEND_FROM missing; skipping email send")
     return
   }
@@ -163,7 +172,10 @@ async function sendBookingStatusEmail(params: {
     </div>
   `
 
-  await resend.emails.send({
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/8b92589e-f5b9-4055-9401-c94eea722f4a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'webhook:sendBookingStatusEmail:beforeResend',message:'about to call resend.emails.send',data:{to:params.to},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+  // #endregion
+  const sendResult = await resend.emails.send({
     from,
     to: [params.to],
     replyTo,
@@ -171,6 +183,9 @@ async function sendBookingStatusEmail(params: {
     html,
     text: `${heading}\n\nReferencia: ${params.bookingReference || "-"}\nTour: ${humanTour}\nFecha: ${humanDate}\nPago: ${params.paymentStatus}`,
   })
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/8b92589e-f5b9-4055-9401-c94eea722f4a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'webhook:sendBookingStatusEmail:afterResend',message:'resend.emails.send completed',data:{to:params.to,error:sendResult.error,id:sendResult.data?.id},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+  // #endregion
 
   console.log("[payments/webhook] Booking status email sent", {
     to: params.to,
@@ -180,6 +195,9 @@ async function sendBookingStatusEmail(params: {
 }
 
 export async function POST(request: Request) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/8b92589e-f5b9-4055-9401-c94eea722f4a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'webhook:POST:entry',message:'webhook POST received',data:{},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+  // #endregion
   try {
     const strictSignature = process.env.MERCADO_PAGO_STRICT_SIGNATURE !== "false"
     const payload = (await request.json()) as MercadoPagoWebhookPayload

@@ -17,12 +17,13 @@ import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SecurePaymentsBadge } from "@/components/secure-payments-badge"
 import { PhoneInput } from "react-international-phone"
+import { formatCurrencyFromCop } from "@/lib/currency"
+import { useCurrency } from "@/components/currency-provider"
 import {
   calculateBookingTotalCop,
   getPrivateGroupPriceCop,
   getTourPricing,
   resolveTourPricingId,
-  toUsdFromCop,
 } from "@/lib/pricing"
 
 const privateTours = [
@@ -58,14 +59,6 @@ const privateTours = [
   },
 ]
 
-function formatCop(value: number) {
-  return `$${value.toLocaleString("es-CO")} COP`
-}
-
-function formatUsd(valueInCop: number) {
-  return `USD ${toUsdFromCop(valueInCop).toLocaleString("en-US", { maximumFractionDigits: 2 })}`
-}
-
 type Step = "mode" | "tour" | "date" | "details" | "contact" | "confirmation"
 type OtpStep = "email" | "code"
 
@@ -86,6 +79,7 @@ export function MultiStepBooking() {
   const [availableGroups, setAvailableGroups] = useState<any[]>([])
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
   const [isTourLocked, setIsTourLocked] = useState(false)
+  const { currency, rates } = useCurrency()
 
   const [formData, setFormData] = useState({
     booking_mode: "" as "full_group" | "join_group" | "",
@@ -678,8 +672,10 @@ export function MultiStepBooking() {
                             if (formData.booking_mode === "join_group") {
                               return (
                                 <>
-                                  <p className="text-lg font-bold text-[#1f3684]">{formatCop(pricing.copPerPerson)}</p>
-                                  <p className="text-xs text-[#5b6a97]">por persona ({formatUsd(pricing.copPerPerson)})</p>
+                                  <p className="text-lg font-bold text-[#1f3684]">
+                                    {formatCurrencyFromCop(pricing.copPerPerson, currency, rates)}
+                                  </p>
+                                  <p className="text-xs text-[#5b6a97]">por persona</p>
                                 </>
                               )
                             }
@@ -689,8 +685,10 @@ export function MultiStepBooking() {
 
                             return (
                               <>
-                                <p className="text-lg font-bold text-[#1f3684]">{formatCop(privateGroupPrice)}</p>
-                                <p className="text-xs text-[#5b6a97]">grupo privado ({formatUsd(privateGroupPrice)})</p>
+                                <p className="text-lg font-bold text-[#1f3684]">
+                                  {formatCurrencyFromCop(privateGroupPrice, currency, rates)}
+                                </p>
+                                <p className="text-xs text-[#5b6a97]">grupo privado</p>
                               </>
                             )
                           })()}
@@ -856,7 +854,7 @@ export function MultiStepBooking() {
                       <PhoneInput
                         defaultCountry="co"
                         value={formData.phone}
-                        onChange={(phone) => setFormData({ ...formData, phone })}
+                        onChange={(phone: string) => setFormData({ ...formData, phone })}
                         inputProps={{
                           id: "phone",
                           required: true,

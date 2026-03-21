@@ -7,6 +7,7 @@ export type FxRates = {
   EUR: number
   updatedAt: string
   buffered: boolean
+  bufferPercent: number
 }
 
 export function formatCurrencyFromCop(
@@ -74,3 +75,36 @@ export function detectCurrencyFromLocale(locale: string | undefined | null): Cur
   return "USD"
 }
 
+export function detectCurrencyFromCountry(country: string | undefined | null): CurrencyCode {
+  if (!country) return "COP"
+  const upper = country.toUpperCase()
+
+  if (upper === "CO") return "COP"
+  if (["US", "PR", "GU", "AS", "VI"].includes(upper)) return "USD"
+
+  const euroRegions = new Set([
+    "AT",
+    "BE",
+    "CY",
+    "DE",
+    "EE",
+    "ES",
+    "FI",
+    "FR",
+    "GR",
+    "HR",
+    "IE",
+    "IT",
+    "LT",
+    "LU",
+    "LV",
+    "MT",
+    "NL",
+    "PT",
+    "SI",
+    "SK",
+  ])
+  if (euroRegions.has(upper)) return "EUR"
+
+  return "USD"
+}

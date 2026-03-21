@@ -15,6 +15,7 @@ import {
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { createClient } from "@/lib/supabase/server"
+import { PriceAmount } from "@/components/price-amount"
 
 type Booking = {
   id: string
@@ -222,7 +223,9 @@ export default async function AccountPage() {
                             </div>
                             <div className="text-right">
                               {booking.total_price !== null ? (
-                                <p className="text-base font-bold text-[#1f3684]">${Number(booking.total_price).toLocaleString("es-CO")} COP</p>
+                                <p className="text-base font-bold text-[#1f3684]">
+                                  <PriceAmount amountCop={Number(booking.total_price)} />
+                                </p>
                               ) : null}
                             </div>
                           </div>

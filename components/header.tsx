@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { BrandLogo } from "@/components/brand-logo"
 import { createClient } from "@/lib/supabase/server"
+import { CurrencySwitcher } from "@/components/currency-switcher"
 
 export async function Header() {
   const supabase = await createClient()
@@ -38,6 +39,7 @@ export async function Header() {
         </Link>
 
         <div className="flex items-center gap-3">
+          <CurrencySwitcher className="hidden md:flex items-center" />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -99,6 +101,11 @@ export async function Header() {
                   </Link>
                 ))}
                 <div className="my-2 border-t border-[#e2e8ff]" />
+
+                <div className="flex items-center justify-between rounded-lg border border-[#dfe6ff] bg-white px-3 py-2">
+                  <span className="text-sm font-semibold text-[#1f3684]">Moneda</span>
+                  <CurrencySwitcher className="flex items-center" triggerClassName="w-[96px]" />
+                </div>
 
                 {user ? (
                   <>

@@ -9,6 +9,7 @@ import { getTourById, toursContent } from "@/lib/tours-content"
 import { getCuratedReviewsByTourId } from "@/lib/curated-reviews"
 import { createClient } from "@/lib/supabase/server"
 import { TourMediaCarousel } from "@/components/tour-media-carousel"
+import { TourPriceBlock } from "@/components/tour-price-block"
 import { getSiteUrl } from "@/lib/site-url"
 import { buildTourStructuredData } from "@/lib/seo-tour-schema"
 import { buildTourMetadata, notFoundTourMetadata } from "@/lib/seo-tour-metadata"
@@ -142,14 +143,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
                 </div>
 
                 <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  {tour.id === "guatape-private" ? (
-                    <div>
-                      <p className="text-2xl font-bold text-[#1f3684]">$600.000 COP</p>
-                      <p className="text-xs text-[#5b6a97]">Precio por grupo privado (hasta 4 personas)</p>
-                    </div>
-                  ) : (
-                    <p className="text-2xl font-bold text-[#1f3684]">{tour.price}</p>
-                  )}
+                  <TourPriceBlock tourId={tour.id} overrideGroupCop={tour.id === "guatape-private" ? 600000 : undefined} />
                   <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <Button asChild className="brand-cta-btn min-w-40">
                       <Link href={`/book?tour=${tour.id}`}>Agendar ahora</Link>
