@@ -39,7 +39,10 @@ export async function Header() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <CurrencySwitcher className="hidden md:flex items-center" />
+          <div className="hidden md:flex items-center gap-2 text-sm font-semibold text-[#5b6a97]">
+            <span>Ver precios en</span>
+            <CurrencySwitcher className="flex items-center" />
+          </div>
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -106,6 +109,7 @@ export async function Header() {
                   <span className="text-sm font-semibold text-[#1f3684]">Moneda</span>
                   <CurrencySwitcher className="flex items-center" triggerClassName="w-[96px]" />
                 </div>
+                <p className="px-1 text-xs text-[#5b6a97]">Cobro final en COP. Conversión estimada.</p>
 
                 {user ? (
                   <>

@@ -3,6 +3,7 @@ import { MercadoPagoConfig, Payment } from "mercadopago"
 import { createClient } from "@supabase/supabase-js"
 import { createHmac, timingSafeEqual } from "node:crypto"
 import { Resend } from "resend"
+import { formatCurrencyValue, isSupportedCurrency, type CurrencyCode } from "@/lib/currency"
 
 type MercadoPagoWebhookPayload = {
   action?: string
@@ -108,6 +109,8 @@ async function sendBookingStatusEmail(params: {
   date: string
   numberOfPeople: number
   totalPrice: number | null
+  displayCurrency?: string | null
+  displayTotal?: number | null
   paymentStatus: string
 }) {
   // #region agent log
@@ -135,7 +138,15 @@ async function sendBookingStatusEmail(params: {
 
   const humanTour = formatTourName(params.tourType)
   const humanDate = new Date(`${params.date}T00:00:00`).toLocaleDateString("es-CO")
-  const totalText = params.totalPrice !== null ? `$${Number(params.totalPrice).toLocaleString("es-CO")} COP` : null
+  const resolvedCurrency: CurrencyCode | null = isSupportedCurrency(params.displayCurrency)
+    ? params.displayCurrency
+    : null
+  const totalText =
+    params.displayTotal !== null && resolvedCurrency
+      ? formatCurrencyValue(params.displayTotal, resolvedCurrency)
+      : params.totalPrice !== null
+        ? formatCurrencyValue(params.totalPrice, "COP")
+        : null
   const supportUrl =
     "https://api.whatsapp.com/send/?phone=573146726226&text=Hola%20UTour,%20necesito%20ayuda%20con%20mi%20reserva"
 
@@ -163,7 +174,12 @@ async function sendBookingStatusEmail(params: {
         <p style="margin:0 0 8px 0;"><strong>Tour:</strong> ${humanTour}</p>
         <p style="margin:0 0 8px 0;"><strong>Fecha:</strong> ${humanDate}</p>
         <p style="margin:0 0 8px 0;"><strong>Personas:</strong> ${params.numberOfPeople}</p>
-        ${totalText ? `<p style="margin:0 0 8px 0;"><strong>Total:</strong> ${totalText}</p>` : ""}
+        ${
+          totalText
+            ? `<p style="margin:0 0 8px 0;"><strong>Total:</strong> ${totalText}</p>
+               <p style="margin:0 0 8px 0;color:#5b6a97;font-size:12px;">Cobro final en COP. Conversión estimada.</p>`
+            : ""
+        }
         <p style="margin:0;"><strong>Pago:</strong> ${params.paymentStatus}</p>
       </div>
       <p style="margin:16px 0 0 0;">
@@ -181,7 +197,9 @@ async function sendBookingStatusEmail(params: {
     replyTo,
     subject,
     html,
-    text: `${heading}\n\nReferencia: ${params.bookingReference || "-"}\nTour: ${humanTour}\nFecha: ${humanDate}\nPago: ${params.paymentStatus}`,
+    text: `${heading}\n\nReferencia: ${params.bookingReference || "-"}\nTour: ${humanTour}\nFecha: ${humanDate}\n${
+      totalText ? `Total: ${totalText}\nCobro final en COP. Conversión estimada.\n` : ""
+    }Pago: ${params.paymentStatus}`,
   })
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/8b92589e-f5b9-4055-9401-c94eea722f4a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'webhook:sendBookingStatusEmail:afterResend',message:'resend.emails.send completed',data:{to:params.to,error:sendResult.error,id:sendResult.data?.id},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
@@ -273,7 +291,7 @@ export async function POST(request: Request) {
 
     const paymentStatus = payment.status ?? "pending"
     const preferenceId =
-      payment.preference_id ??
+      (payment as { preference_id?: string }).preference_id ??
       (typeof payment.metadata?.preference_id === "string" ? payment.metadata.preference_id : null)
     const bookingIdFallback =
       (typeof payment.external_reference === "string" ? payment.external_reference : null) ??
@@ -297,14 +315,40 @@ export async function POST(request: Request) {
 
     const bookingStatus = mapPaymentStatusToBookingStatus(paymentStatus)
     const supabase = createClient(supabaseUrl, serviceRoleKey)
-    const bookingQuery = supabase
-      .from("bookings")
-      .select(
-        "id, mp_payment_id, payment_status, preference_id, booking_reference, name, email, tour_type, date, number_of_people, total_price",
-      )
-    const { data: booking, error: bookingError } = preferenceId
-      ? await bookingQuery.eq("preference_id", preferenceId).maybeSingle()
-      : await bookingQuery.eq("id", bookingIdFallback!).maybeSingle()
+    const bookingQuery = supabase.from("bookings")
+    let { data: booking, error: bookingError } = preferenceId
+      ? await bookingQuery
+          .select(
+            "id, mp_payment_id, payment_status, preference_id, booking_reference, name, email, tour_type, date, number_of_people, total_price, display_currency, display_total",
+          )
+          .eq("preference_id", preferenceId)
+          .maybeSingle()
+      : await bookingQuery
+          .select(
+            "id, mp_payment_id, payment_status, preference_id, booking_reference, name, email, tour_type, date, number_of_people, total_price, display_currency, display_total",
+          )
+          .eq("id", bookingIdFallback!)
+          .maybeSingle()
+
+    const isMissingDisplayColumns =
+      bookingError &&
+      (bookingError.code === "PGRST204" ||
+        bookingError.message.includes("display_currency") ||
+        bookingError.message.includes("display_total"))
+
+    if (isMissingDisplayColumns) {
+      console.warn("[payments/webhook] bookings display columns missing, retrying without display values")
+      const fallbackQuery = supabase
+        .from("bookings")
+        .select(
+          "id, mp_payment_id, payment_status, preference_id, booking_reference, name, email, tour_type, date, number_of_people, total_price",
+        )
+      const fallback = preferenceId
+        ? await fallbackQuery.eq("preference_id", preferenceId).maybeSingle()
+        : await fallbackQuery.eq("id", bookingIdFallback!).maybeSingle()
+      booking = fallback.data
+      bookingError = fallback.error
+    }
 
     if (bookingError) {
       console.error("[payments/webhook] Failed to load booking", {
@@ -398,6 +442,8 @@ export async function POST(request: Request) {
         date: booking.date,
         numberOfPeople: booking.number_of_people,
         totalPrice: booking.total_price,
+        displayCurrency: (booking as { display_currency?: string | null }).display_currency ?? null,
+        displayTotal: (booking as { display_total?: number | null }).display_total ?? null,
         paymentStatus,
       })
     } catch (emailError) {

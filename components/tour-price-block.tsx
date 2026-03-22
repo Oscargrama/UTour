@@ -28,6 +28,7 @@ export function TourPriceBlock({ tourId, overrideGroupCop }: TourPriceBlockProps
           {formatCurrencyFromCop(overrideGroupCop, currency, rates)}
         </p>
         <p className="text-xs text-[#5b6a97]">Precio por grupo privado (hasta 4 personas)</p>
+        <p className="text-[11px] text-[#7c89b5]">Cobro final en COP. Conversión estimada.</p>
       </div>
     )
   }
@@ -40,6 +41,7 @@ export function TourPriceBlock({ tourId, overrideGroupCop }: TourPriceBlockProps
         {formatCurrencyFromCop(perPerson, currency, rates)}
       </p>
       <p className="text-xs text-[#5b6a97]">Precio por persona</p>
+      <p className="text-[11px] text-[#7c89b5]">Cobro final en COP. Conversión estimada.</p>
     </div>
   )
 }

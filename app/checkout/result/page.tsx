@@ -4,7 +4,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { WhatsAppFloatButton } from "@/components/whatsapp-float-button"
 import { createClient } from "@supabase/supabase-js"
-import { PriceAmount } from "@/components/price-amount"
+import { formatCurrencyValue, isSupportedCurrency, type CurrencyCode } from "@/lib/currency"
 
 export const dynamic = "force-dynamic"
 
@@ -17,6 +17,8 @@ type BookingRecord = {
   date: string
   number_of_people: number
   total_price: number | null
+  display_currency?: string | null
+  display_total?: number | null
   payment_status: string | null
   status: string | null
 }
@@ -70,11 +72,22 @@ async function getBookingById(bookingId: string) {
   if (!supabaseUrl || !serviceRoleKey) return null
 
   const supabase = createClient(supabaseUrl, serviceRoleKey)
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("bookings")
-    .select("id, booking_reference, tour_type, date, number_of_people, total_price, payment_status, status")
+    .select(
+      "id, booking_reference, tour_type, date, number_of_people, total_price, display_currency, display_total, payment_status, status",
+    )
     .eq("id", bookingId)
     .maybeSingle()
+
+  if (error?.code === "PGRST204") {
+    const fallback = await supabase
+      .from("bookings")
+      .select("id, booking_reference, tour_type, date, number_of_people, total_price, payment_status, status")
+      .eq("id", bookingId)
+      .maybeSingle()
+    return fallback.data as BookingRecord | null
+  }
 
   return data as BookingRecord | null
 }
@@ -92,6 +105,15 @@ export default async function CheckoutResultPage({
   const status = normalizeStatus((booking?.payment_status ?? incomingStatus) || "pending")
   const style = statusStyles(status)
   const StatusIcon = style.icon
+  const resolvedCurrency: CurrencyCode | null = isSupportedCurrency(booking?.display_currency)
+    ? booking?.display_currency
+    : null
+  const totalText =
+    booking?.display_total !== null && booking?.display_total !== undefined && resolvedCurrency
+      ? formatCurrencyValue(booking.display_total, resolvedCurrency)
+      : booking?.total_price !== null && booking?.total_price !== undefined
+        ? formatCurrencyValue(Number(booking.total_price), "COP")
+        : null
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-[#eef3ff]">
@@ -130,17 +152,22 @@ export default async function CheckoutResultPage({
                   <p>
                     <strong>Personas:</strong> {booking.number_of_people}
                   </p>
-                  {booking.total_price !== null && (
+                  {totalText ? (
                     <p>
-                      <strong>Total:</strong> <PriceAmount amountCop={Number(booking.total_price)} />
+                      <strong>Total:</strong> {totalText}
                     </p>
-                  )}
+                  ) : null}
                   <p>
                     <strong>Pago:</strong> {booking.payment_status || "pending"}
                   </p>
                   <p className="md:col-span-2">
                     <strong>Reserva:</strong> {booking.status || "pending"}
                   </p>
+                  {totalText ? (
+                    <p className="md:col-span-2 text-xs text-[#5b6a97]">
+                      Cobro final en COP. Conversión estimada.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             ) : (

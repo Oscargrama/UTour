@@ -18,6 +18,8 @@ type BookingPayload = {
   ambassador_id?: string | null
   referral_code?: string | null
   booking_mode?: "full_group" | "join_group"
+  display_currency?: "COP" | "USD" | "EUR"
+  display_total?: number
 }
 
 type CreatePreferenceBody = {
@@ -69,6 +71,11 @@ function isLocalhostUrl(url: string) {
   } catch {
     return false
   }
+}
+
+function normalizeDisplayCurrency(value: BookingPayload["display_currency"]) {
+  if (value === "USD" || value === "EUR" || value === "COP") return value
+  return "COP"
 }
 
 export async function POST(request: Request) {
@@ -166,6 +173,9 @@ export async function POST(request: Request) {
       }
     }
 
+    const displayCurrency = normalizeDisplayCurrency(bookingData.display_currency)
+    const displayTotal = typeof bookingData.display_total === "number" ? bookingData.display_total : null
+
     const bookingInsertBase = {
       name: bookingData.name,
       email: bookingData.email,
@@ -180,18 +190,49 @@ export async function POST(request: Request) {
       referral_code: bookingData.referral_code ?? null,
       booking_mode: bookingData.booking_mode ?? "full_group",
       total_price: computedTotalPrice,
+      display_currency: displayCurrency,
+      display_total: displayTotal,
       status: "pending",
       payment_status: "pending",
     }
 
+    const bookingInsertBaseWithoutDisplay = {
+      ...bookingInsertBase,
+    }
+    delete (bookingInsertBaseWithoutDisplay as Partial<typeof bookingInsertBase>).display_currency
+    delete (bookingInsertBaseWithoutDisplay as Partial<typeof bookingInsertBase>).display_total
+
+    let bookingInsertPayload = bookingInsertBase
+
     let { data: createdBooking, error: bookingError } = await supabase
       .from("bookings")
       .insert({
-        ...bookingInsertBase,
+        ...bookingInsertPayload,
         user_id: user?.id ?? null,
       })
       .select("id")
       .single()
+
+    const isMissingDisplayColumns =
+      bookingError &&
+      (bookingError.code === "PGRST204" ||
+        bookingError.message.includes("display_currency") ||
+        bookingError.message.includes("display_total"))
+
+    if (isMissingDisplayColumns) {
+      console.warn("[payments/create-preference] bookings display columns missing, retrying without display values")
+      bookingInsertPayload = bookingInsertBaseWithoutDisplay
+      const retry = await supabase
+        .from("bookings")
+        .insert({
+          ...bookingInsertPayload,
+          user_id: user?.id ?? null,
+        })
+        .select("id")
+        .single()
+      createdBooking = retry.data
+      bookingError = retry.error
+    }
 
     const isMissingUserIdColumn =
       bookingError &&
@@ -199,7 +240,7 @@ export async function POST(request: Request) {
 
     if (isMissingUserIdColumn) {
       console.warn("[payments/create-preference] bookings.user_id missing, retrying without user_id")
-      const retry = await supabase.from("bookings").insert(bookingInsertBase).select("id").single()
+      const retry = await supabase.from("bookings").insert(bookingInsertPayload).select("id").single()
       createdBooking = retry.data
       bookingError = retry.error
     }
@@ -209,7 +250,7 @@ export async function POST(request: Request) {
       console.warn("[payments/create-preference] bookings.user_id FK failed, retrying with user_id=null")
       const retryWithoutUser = await supabase
         .from("bookings")
-        .insert({ ...bookingInsertBase, user_id: null })
+        .insert({ ...bookingInsertPayload, user_id: null })
         .select("id")
         .single()
       createdBooking = retryWithoutUser.data

@@ -10,6 +10,10 @@ export type FxRates = {
   bufferPercent: number
 }
 
+export function isSupportedCurrency(value: string | null | undefined): value is CurrencyCode {
+  return value === "COP" || value === "USD" || value === "EUR"
+}
+
 export function formatCurrencyFromCop(
   amountCop: number,
   currency: CurrencyCode,
@@ -35,6 +39,31 @@ export function formatCurrencyFromCop(
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(converted)
+}
+
+export function convertFromCop(amountCop: number, currency: CurrencyCode, rates: FxRates | null) {
+  if (!Number.isFinite(amountCop)) return 0
+  if (currency === "COP" || !rates) return amountCop
+  return amountCop * rates[currency]
+}
+
+export function formatCurrencyValue(amount: number, currency: CurrencyCode) {
+  if (!Number.isFinite(amount)) return ""
+  if (currency === "COP") {
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const locale = currency === "USD" ? "en-US" : "es-ES"
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
 }
 
 export function detectCurrencyFromLocale(locale: string | undefined | null): CurrencyCode {

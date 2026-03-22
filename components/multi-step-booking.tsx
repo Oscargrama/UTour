@@ -17,7 +17,8 @@ import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SecurePaymentsBadge } from "@/components/secure-payments-badge"
 import { PhoneInput } from "react-international-phone"
-import { formatCurrencyFromCop } from "@/lib/currency"
+import "react-international-phone/style.css"
+import { convertFromCop, formatCurrencyFromCop } from "@/lib/currency"
 import { useCurrency } from "@/components/currency-provider"
 import {
   calculateBookingTotalCop,
@@ -85,7 +86,7 @@ export function MultiStepBooking() {
     booking_mode: "" as "full_group" | "join_group" | "",
     tour_type: "",
     date: undefined as Date | undefined,
-    number_of_people: "2",
+    number_of_people: "",
     language: "spanish",
     name: "",
     phone: "",
@@ -133,6 +134,20 @@ export function MultiStepBooking() {
       fetchAvailableGroups()
     }
   }, [formData.booking_mode, formData.tour_type, formData.date])
+
+  useEffect(() => {
+    if (formData.booking_mode !== "join_group" || !selectedGroup) return
+    const group = availableGroups.find((g) => g.id === selectedGroup)
+    if (!group?.available_seats) return
+    const current = Number.parseInt(formData.number_of_people || "0")
+    if (current > group.available_seats) {
+      setFormData((prev) => ({ ...prev, number_of_people: String(group.available_seats) }))
+      toast({
+        title: "Ajustamos la cantidad",
+        description: `Este grupo tiene ${group.available_seats} cupo(s). Actualizamos tu selección.`,
+      })
+    }
+  }, [availableGroups, selectedGroup, formData.booking_mode, formData.number_of_people, toast])
 
   useEffect(() => {
     if (!preselectedTourId) return
@@ -239,7 +254,7 @@ export function MultiStepBooking() {
   const canProceed = () => {
     switch (currentStep) {
       case "mode":
-        return !!formData.booking_mode
+        return !!formData.booking_mode && !!formData.number_of_people
       case "tour":
         return !!formData.tour_type
       case "date":
@@ -248,7 +263,7 @@ export function MultiStepBooking() {
         }
         return !!formData.date
       case "details":
-        return !!formData.number_of_people && !!formData.language
+        return !!formData.language
       case "contact":
         return !!formData.name && !!formData.email && !!formData.phone && formData.acceptTerms
       default:
@@ -277,11 +292,19 @@ export function MultiStepBooking() {
       }
 
       const peopleCount = Number.parseInt(formData.number_of_people)
+      if (!Number.isFinite(peopleCount) || peopleCount <= 0) {
+        throw new Error("Selecciona la cantidad de personas.")
+      }
       const totalPrice = calculateBookingTotalCop({
         tourId: selectedTour.id,
         bookingMode: formData.booking_mode as "full_group" | "join_group",
         numberOfPeople: peopleCount,
       })
+
+      const displayCurrency = currency === "COP" || rates ? currency : "COP"
+      const rawDisplayTotal = convertFromCop(totalPrice, displayCurrency, rates)
+      const displayTotal =
+        displayCurrency === "COP" ? Math.round(rawDisplayTotal) : Number(rawDisplayTotal.toFixed(2))
 
       const bookingData = {
         name: formData.name,
@@ -295,6 +318,8 @@ export function MultiStepBooking() {
         ambassador_id: ambassadorId,
         referral_code: formData.referral_code || null,
         booking_mode: formData.booking_mode as "full_group" | "join_group",
+        display_currency: displayCurrency,
+        display_total: displayTotal,
       }
 
       const response = await fetch("/api/payments/create-preference", {
@@ -441,6 +466,50 @@ export function MultiStepBooking() {
     } finally {
       setAuthLoading(false)
     }
+  }
+
+  const renderPriceSummary = (className?: string) => {
+    if (currentStep === "confirmation") return null
+
+    let amountText = "Selecciona modo y personas"
+    let showLegal = false
+
+    if (formData.booking_mode && formData.number_of_people) {
+      if (!formData.tour_type) {
+        amountText = "Selecciona un tour para ver total"
+      } else {
+        const pricing = getTourPricing(formData.tour_type)
+        if (!pricing) {
+          amountText = "Consultar precio"
+        } else if (pricing.model === "tips_based") {
+          amountText = "Basado en propinas"
+        } else {
+          const peopleCount = Number.parseInt(formData.number_of_people)
+          if (Number.isFinite(peopleCount) && peopleCount > 0) {
+            const totalCop = calculateBookingTotalCop({
+              tourId: formData.tour_type,
+              bookingMode: formData.booking_mode as "full_group" | "join_group",
+              numberOfPeople: peopleCount,
+            })
+            amountText = formatCurrencyFromCop(totalCop, currency, rates)
+            showLegal = true
+          }
+        }
+      }
+    }
+
+    return (
+      <div className={`rounded-2xl border border-[#d8e2ff] bg-white p-5 shadow-sm ${className || ""}`}>
+        <p className="text-xs uppercase tracking-wide text-[#7c89b5]">Valor a Pagar</p>
+        <div className="mt-3 text-2xl font-semibold text-[#1f3684]">{amountText}</div>
+        {showLegal ? (
+          <p className="mt-2 text-xs leading-relaxed text-[#5b6a97]">
+            El cobro final se realizará en pesos colombianos (COP). El valor mostrado en otras monedas es referencial y
+            puede variar según la tasa de cambio aplicada por tu banco o método de pago.
+          </p>
+        ) : null}
+      </div>
+    )
   }
 
   return (
@@ -604,35 +673,69 @@ export function MultiStepBooking() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="lg:hidden">{renderPriceSummary()}</div>
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="space-y-6">
               {currentStep === "mode" && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div
-                    onClick={() => setFormData({ ...formData, booking_mode: "full_group" })}
-                    className={`cursor-pointer rounded-2xl border-2 p-6 transition-all hover:border-[#7A2CE8] hover:shadow-md ${
-                      formData.booking_mode === "full_group"
-                        ? "border-[#7A2CE8] bg-gradient-to-br from-[#f3edff] to-[#ecf8ff]"
-                        : "border-[#d8e2ff] bg-white"
-                    }`}
-                  >
-                    <Users className="mb-4 h-12 w-12 text-[#1f85d4]" />
-                    <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Reservar Grupo Completo - Privado</h3>
-                    <p className="text-sm text-[#5b6a97]">
-                      Disfruta el tour solo con tu grupo (1-4 personas). Las 4 plazas se reservan completas con 20% de descuento.
-                    </p>
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div
+                      onClick={() => setFormData({ ...formData, booking_mode: "full_group" })}
+                      className={`cursor-pointer rounded-2xl border-2 p-6 transition-all hover:border-[#7A2CE8] hover:shadow-md ${
+                        formData.booking_mode === "full_group"
+                          ? "border-[#7A2CE8] bg-gradient-to-br from-[#f3edff] to-[#ecf8ff]"
+                          : "border-[#d8e2ff] bg-white"
+                      }`}
+                    >
+                      <Users className="mb-4 h-12 w-12 text-[#1f85d4]" />
+                      <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Reservar Grupo Completo - Privado</h3>
+                      <p className="text-sm text-[#5b6a97]">
+                        Disfruta el tour solo con tu grupo (1-4 personas). Las 4 plazas se reservan completas con 20% de descuento.
+                      </p>
+                    </div>
+                    <div
+                      onClick={() => setFormData({ ...formData, booking_mode: "join_group" })}
+                      className={`cursor-pointer rounded-2xl border-2 p-6 transition-all hover:border-[#7A2CE8] hover:shadow-md ${
+                        formData.booking_mode === "join_group"
+                          ? "border-[#7A2CE8] bg-gradient-to-br from-[#f3edff] to-[#ecf8ff]"
+                          : "border-[#d8e2ff] bg-white"
+                      }`}
+                    >
+                      <User className="mb-4 h-12 w-12 text-[#1f85d4]" />
+                      <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Unirme a un Grupo</h3>
+                      <p className="text-sm text-[#5b6a97]">
+                        Comparte el tour con otros viajeros y paga valor por persona según cuántos viajan contigo.
+                      </p>
+                    </div>
                   </div>
+
                   <div
-                    onClick={() => setFormData({ ...formData, booking_mode: "join_group" })}
-                    className={`cursor-pointer rounded-2xl border-2 p-6 transition-all hover:border-[#7A2CE8] hover:shadow-md ${
-                      formData.booking_mode === "join_group"
-                        ? "border-[#7A2CE8] bg-gradient-to-br from-[#f3edff] to-[#ecf8ff]"
-                        : "border-[#d8e2ff] bg-white"
+                    className={`rounded-2xl border border-[#d8e2ff] p-5 transition-all ${
+                      formData.booking_mode ? "bg-white" : "bg-[#f7faff] opacity-60 blur-[1px] pointer-events-none"
                     }`}
                   >
-                    <User className="mb-4 h-12 w-12 text-[#1f85d4]" />
-                    <h3 className="mb-2 text-lg font-semibold text-[#1f3684]">Unirme a un Grupo</h3>
-                    <p className="text-sm text-[#5b6a97]">
-                      Comparte el tour con otros viajeros y paga valor por persona según cuántos viajan contigo.
-                    </p>
+                    <Label className="text-sm font-semibold text-[#1f3684]">¿Cuántas personas viajan?</Label>
+                    <p className="mt-1 text-xs text-[#5b6a97]">Selecciona la cantidad para calcular el valor total.</p>
+                    <div className="mt-3">
+                      <Select
+                        value={formData.number_of_people}
+                        onValueChange={(value) => setFormData({ ...formData, number_of_people: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona cantidad" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4].map((num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4" />
+                                {num} {num === 1 ? "persona" : "personas"}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -758,44 +861,6 @@ export function MultiStepBooking() {
               {currentStep === "details" && (
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label>
-                      Número de Personas{" "}
-                      {formData.booking_mode === "join_group" ? "(máximo según disponibilidad)" : "(máximo 4)"}
-                    </Label>
-                    <Select
-                      value={formData.number_of_people}
-                      onValueChange={(value) => setFormData({ ...formData, number_of_people: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData.booking_mode === "join_group" && selectedGroup
-                          ? (() => {
-                              const group = availableGroups.find((g) => g.id === selectedGroup)
-                              const maxSeats = group?.available_seats || 4
-                              return Array.from({ length: Math.min(maxSeats, 4) }, (_, i) => i + 1).map((num) => (
-                                <SelectItem key={num} value={num.toString()}>
-                                  <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4" />
-                                    {num} {num === 1 ? "persona" : "personas"}
-                                  </div>
-                                </SelectItem>
-                              ))
-                            })()
-                          : [1, 2, 3, 4].map((num) => (
-                              <SelectItem key={num} value={num.toString()}>
-                                <div className="flex items-center gap-2">
-                                  <Users className="h-4 w-4" />
-                                  {num} {num === 1 ? "persona" : "personas"}
-                                </div>
-                              </SelectItem>
-                            ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
                     <Label>Idioma del Tour</Label>
                     <RadioGroup
                       value={formData.language}
@@ -803,15 +868,15 @@ export function MultiStepBooking() {
                     >
                       <div className="flex cursor-pointer items-center space-x-2 rounded-xl border border-[#d8e2ff] p-4 hover:bg-[#f7faff]">
                         <RadioGroupItem value="spanish" id="spanish" />
-                        <Label htmlFor="spanish" className="flex items-center gap-2 cursor-pointer flex-1">
-                          <Globe className="h-4 w-4" />
+                        <Label htmlFor="spanish" className="flex items-center gap-3 cursor-pointer flex-1">
+                          <span className="text-lg">🇪🇸</span>
                           Español
                         </Label>
                       </div>
                       <div className="flex cursor-pointer items-center space-x-2 rounded-xl border border-[#d8e2ff] p-4 hover:bg-[#f7faff]">
                         <RadioGroupItem value="english" id="english" />
-                        <Label htmlFor="english" className="flex items-center gap-2 cursor-pointer flex-1">
-                          <Globe className="h-4 w-4" />
+                        <Label htmlFor="english" className="flex items-center gap-3 cursor-pointer flex-1">
+                          <span className="text-lg">🇬🇧</span>
                           English
                         </Label>
                       </div>
@@ -893,13 +958,17 @@ export function MultiStepBooking() {
                     </p>
                   </div>
 
-                  <div className="flex items-start space-x-2 rounded-xl border border-[#d8e2ff] bg-[#f8fbff] p-4">
+                  <div className="flex items-start gap-3 rounded-xl border border-[#d8e2ff] bg-[#f8fbff] p-4">
                     <Checkbox
                       id="acceptTerms"
                       checked={formData.acceptTerms}
                       onCheckedChange={(checked) => setFormData({ ...formData, acceptTerms: checked as boolean })}
+                      className="mt-1"
                     />
-                    <Label htmlFor="acceptTerms" className="text-sm cursor-pointer leading-relaxed">
+                    <Label
+                      htmlFor="acceptTerms"
+                      className="cursor-pointer !block text-xs leading-relaxed text-[#2a3868]"
+                    >
                       Acepto los{" "}
                       <Link
                         href="/legal/terms"
@@ -916,8 +985,8 @@ export function MultiStepBooking() {
                       >
                         Política de Privacidad y Protección de Datos Personales
                       </Link>
-                      . Autorizo el uso de mis datos personales exclusivamente para la gestión y control de mi reserva
-                      con fines turísticos.
+                      . Autorizo el uso de mis datos personales exclusivamente para la gestión y control de mi reserva con
+                      fines turísticos.
                     </Label>
                   </div>
                 </div>
@@ -964,6 +1033,11 @@ export function MultiStepBooking() {
                   </Button>
                 </div>
               )}
+                </div>
+                <div className="hidden lg:block">
+                  <div className="sticky top-28">{renderPriceSummary()}</div>
+                </div>
+              </div>
 
               {currentStep !== "confirmation" && (
                 <div className="flex justify-between pt-6">
