@@ -1,108 +1,204 @@
-# UTour - Landing Page
+# UTour
 
-Una plataforma completa para tours privados en Medellín y Guatapé, Colombia.
+Plataforma de experiencias privadas y semiprivadas en Medellín y Antioquia, con flujo de reserva y pagos por Mercado Pago, contenido SEO, y backoffice ligero en Supabase.
 
-## Características
+## Qué es UTour
 
-### Frontend
-- Landing page moderna con diseño responsive
-- Sistema de reservas con formularios validados
-- Blog con SEO optimizado
-- Newsletter con suscripción por email
-- Testimonios de clientes
-- FAQs dinámicas
-- Botón flotante de WhatsApp
+- **Reservas** con flujo guiado (modo de viaje → tour → fecha → datos → pago).
+- **Pagos** integrados con Mercado Pago (preference + webhook).
+- **Auth** en el paso de pago (Google + OTP por email).
+- **Moneda de visualización** (COP / USD / EUR) con geolocalización y tasa protegida.
+- **SEO** técnico con metadata por página y JSON‑LD por tour.
+- **Blog** y **FAQs** como contenido de atracción.
 
-### Backend
-- Base de datos PostgreSQL con Supabase
-- Autenticación con Supabase Auth
-- Row Level Security (RLS) para protección de datos
-- API routes para envío de emails
-- Webhooks para eventos de base de datos
+---
 
-### Admin Dashboard
-- Panel de administración protegido
-- Gestión de reservas con actualizaciones de estado
-- Aprobación de testimonios
-- Creación y edición de posts de blog
-- Vista de suscriptores del newsletter
+## Stack
 
-### Integraciones
-- **Supabase**: Base de datos y autenticación
-- **Email**: Sistema de templates para confirmaciones y bienvenida
-- **Analytics**: Preparado para Google Analytics y Facebook Pixel
-- **WhatsApp**: Integración directa con botón flotante
+- **Next.js 16** (App Router, Turbopack)
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS v4**
+- **Supabase** (PostgreSQL + Auth + Storage)
+- **Mercado Pago** (Checkout + Webhook)
+- **Resend** (emails transaccionales)
 
-## Tecnologías
+---
 
-- Next.js 16 (App Router)
-- React 19.2
-- TypeScript
-- Tailwind CSS v4
-- Supabase (PostgreSQL + Auth)
-- shadcn/ui components
+## Estructura de carpetas (resumen)
 
-## Configuración
+```
+app/
+  api/                         # Rutas API (pagos, webhooks, geo, fx, email)
+  book/                        # Flujo de reservas
+  checkout/result/             # Confirmación de pago
+  tours/                       # Listado y detalle de tours
+  blog/                        # Blog público
+  faqs/                        # Preguntas frecuentes
+  account/                     # Dashboard usuario
+components/                    # UI/blocks reutilizables
+lib/
+  tours-content.ts             # Contenido base de tours (SEO + UI)
+  pricing.ts                   # Reglas de pricing (COP base)
+  currency.ts                  # Conversión y formato por moneda
+scripts/                       # SQL de creación / seed
+public/                        # Assets estáticos (logos, OG, etc.)
+```
 
-### Variables de Entorno
+---
 
-Las siguientes variables están configuradas automáticamente:
+## Flujos clave
+
+### 1) Reserva + Pago
+
+1. **/book**: el usuario elige modo (grupo privado o unirse) → personas → tour → fecha → datos.
+2. Se crea una **preference** en Mercado Pago.
+3. Mercado Pago redirige a `/checkout/result`.
+4. Webhook confirma pago y actualiza `bookings`.
+
+### 2) Login suave antes de pagar
+
+- Autenticación se pide justo antes de redirigir a Mercado Pago.
+- Opciones: **Google OAuth** o **OTP por email**.
+- La cuenta se crea automáticamente.
+
+### 3) Moneda de visualización
+
+- UI permite elegir COP / USD / EUR.
+- Se guarda la moneda elegida para enviar emails con el mismo formato.
+- Nota legal: *“Cobro final en COP. Conversión estimada.”*
+
+---
+
+## Pricing (reglas)
+
+Definido en `lib/pricing.ts`:
+
+- COP es la moneda base.
+- **Grupo privado**: se cobra como 4 plazas con 20% de descuento.
+- **Unirme a grupo**: se cobra por persona.
+- **City Tour**: basado en propinas (no usa checkout fijo).
+
+---
+
+## Base de datos (Supabase)
+
+### Tablas principales
+
+- `bookings`
+- `users`
+- `testimonials`
+- `blog_posts`
+- `subscribers`
+
+### Columnas importantes en `bookings`
+
+- `payment_status`, `preference_id`, `mp_payment_id`
+- `display_currency`, `display_total` (para emails con moneda elegida)
+- `user_id` (relación con `users`)
+
+---
+
+## Variables de entorno
+
+### Supabase
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- Otras variables de Supabase para conexión directa
 
-**Nota:** Los webhooks de Supabase son opcionales. La aplicación funciona completamente sin ellos. Solo son necesarios si quieres notificaciones automáticas cuando ocurren eventos en la base de datos.
+### Mercado Pago
 
-### Instalación
+- `MERCADO_PAGO_ACCESS_TOKEN`
+- `MERCADO_PAGO_WEBHOOK_SECRET`
+- `MERCADO_PAGO_WEBHOOK_URL` (opcional)
+- `MERCADO_PAGO_USE_SANDBOX` (true/false)
+- `MERCADO_PAGO_STRICT_SIGNATURE` (true/false)
+- `MERCADO_PAGO_EXCLUDE_ACCOUNT_MONEY` (opcional)
 
-1. Clona el repositorio
-2. Ejecuta los scripts SQL en orden:
-   - `scripts/001_create_tables.sql`
-   - `scripts/002_seed_data.sql`
-   - `scripts/003_enable_rls.sql`
-3. Instala dependencias: `npm install`
-4. Ejecuta el proyecto: `npm run dev`
+### App
 
-### Primer Usuario Admin
+- `APP_URL` o `NEXT_PUBLIC_APP_URL` (base para back_urls)
 
-Para crear tu primer usuario administrador:
+### Resend (emails)
 
-1. Ve a la sección de Authentication en Supabase
-2. Crea un nuevo usuario con email y contraseña
-3. Usa esas credenciales en `/login`
+- `RESEND_API_KEY`
+- `RESEND_FROM` (ej. `UTour <reservas@designlabmarketing.com>`)
+- `RESEND_REPLY_TO` (opcional)
 
-## Estructura del Proyecto
+---
 
-\`\`\`
-/app
-  /admin          - Dashboard de administración
-  /blog           - Blog público
-  /api            - API routes (emails, webhooks)
-/components       - Componentes reutilizables
-/lib              - Utilidades y configuración
-/scripts          - Scripts SQL para base de datos
-\`\`\`
+## Setup local (rápido)
 
-## Próximos Pasos
+1. Instalar dependencias:
 
-### Integraciones Recomendadas
+```
+npm install
+```
 
-1. **Email Service**: Integrar Resend o SendGrid para envío real de emails
-   - Agrega `RESEND_API_KEY` en la sección Vars del sidebar
-2. **Analytics**: Agregar Google Analytics 4
-3. **Pagos**: Integrar Stripe para pagos online
-4. **CRM**: Conectar con sistema de gestión de clientes
-5. **Webhooks** (Opcional): Configurar webhooks en Supabase Dashboard para notificaciones en tiempo real
+2. Ejecutar scripts SQL en Supabase (orden sugerido):
 
-### Mejoras Futuras
+```
+scripts/001_create_tables.sql
+scripts/002_seed_data.sql
+scripts/003_enable_rls.sql
+scripts/013_add_booking_display_currency.sql
+```
 
-- Sistema de reviews con verificación
-- Calendario de disponibilidad en tiempo real
-- Multi-idioma (español/inglés)
-- Galería de fotos de tours
-- Sistema de cupones y descuentos
+3. Ejecutar el proyecto:
 
-## Contacto
+```
+npm run dev
+```
 
-Para soporte: oscar@youtour.com
+---
+
+## Webhook de pagos
+
+URL recomendada:
+
+```
+https://tu-dominio.com/api/payments/webhook
+```
+
+El webhook:
+- valida firma HMAC de Mercado Pago
+- consulta el pago por ID
+- actualiza `bookings`
+- envía email vía Resend
+
+---
+
+## SEO técnico
+
+✅ Metadata por página  
+✅ JSON‑LD por tour  
+✅ Sitemap (`app/sitemap.ts`)  
+✅ Verificación Search Console vía archivo en `public/`  
+✅ OG images en `public/og/`
+
+---
+
+## Scripts de blog / SEO
+
+Los posts se insertan via SQL en `scripts/011_*.sql`, `scripts/012_*.sql`, etc.
+
+---
+
+## Deploy
+
+```
+git add .
+git commit -m "update"
+git push origin main
+```
+
+Vercel toma el deploy automáticamente.
+
+---
+
+## Soporte / contacto
+
+- **WhatsApp:** +57 314 672 6226  
+- **Email:** d.oinfante@gmail.com
+
