@@ -5,7 +5,7 @@ function normalizeSiteUrl(value: string) {
 }
 
 export function getSiteUrl() {
-  const candidates = [process.env.NEXT_PUBLIC_APP_URL, process.env.APP_URL, "https://youtour.vercel.app"]
+  const candidates = [process.env.NEXT_PUBLIC_APP_URL, process.env.APP_URL, "https://utour.lat"]
 
   for (const candidate of candidates) {
     if (!candidate) continue
@@ -16,5 +16,5 @@ export function getSiteUrl() {
     }
   }
 
-  return "https://youtour.vercel.app"
+  return "https://utour.lat"
 }
