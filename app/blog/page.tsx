@@ -5,7 +5,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Calendar, User } from "lucide-react"
+import Image from "next/image"
 import type { Metadata } from "next"
+
+export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: "Blog de Viajes - UTour | Guías y Tips para Colombia",
@@ -21,6 +24,23 @@ export const metadata: Metadata = {
     type: "website",
     url: "/blog",
   },
+}
+
+const IMAGE_QUALITY = 70
+
+function getOptimizedImageUrl(url: string, width: number) {
+  if (!url) return url
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes("supabase.co")) {
+      parsed.searchParams.set("width", String(width))
+      parsed.searchParams.set("quality", String(IMAGE_QUALITY))
+      return parsed.toString()
+    }
+  } catch {
+    return url
+  }
+  return url
 }
 
 export default async function BlogPage() {
@@ -63,10 +83,13 @@ export default async function BlogPage() {
                   <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                     {post.image_url && (
                       <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={post.image_url || "/placeholder.svg"}
+                        <Image
+                          src={getOptimizedImageUrl(post.image_url, 800)}
                           alt={post.title}
-                          className="h-full w-full object-cover transition-transform hover:scale-105"
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                          className="object-cover transition-transform hover:scale-105"
+                          unoptimized
                         />
                       </div>
                     )}

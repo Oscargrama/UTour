@@ -5,12 +5,32 @@ import { notFound } from "next/navigation"
 import { Calendar, User, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 import type { Metadata } from "next"
+
+export const revalidate = 86400
 
 interface BlogPostPageProps {
   params: Promise<{
     slug: string
   }>
+}
+
+const IMAGE_QUALITY = 70
+
+function getOptimizedImageUrl(url: string, width: number) {
+  if (!url) return url
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes("supabase.co")) {
+      parsed.searchParams.set("width", String(width))
+      parsed.searchParams.set("quality", String(IMAGE_QUALITY))
+      return parsed.toString()
+    }
+  } catch {
+    return url
+  }
+  return url
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
@@ -52,6 +72,29 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound()
   }
 
+  const siteUrl = "https://utour.lat"
+  const postUrl = `${siteUrl}/blog/${post.slug}`
+  const published = post.created_at ? new Date(post.created_at).toISOString() : new Date().toISOString()
+  const modified = post.updated_at ? new Date(post.updated_at).toISOString() : published
+  const images = post.image_url ? [post.image_url] : []
+  const blogPostingSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt || post.title,
+    image: images,
+    author: {
+      "@type": "Person",
+      name: post.author || "UTour",
+    },
+    datePublished: published,
+    dateModified: modified,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": postUrl,
+    },
+  }
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -60,10 +103,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         {/* Hero Section with Image */}
         {post.image_url && (
           <section className="relative h-[400px] bg-[#1f2937]">
-            <img
-              src={post.image_url || "/placeholder.svg"}
+            <Image
+              src={getOptimizedImageUrl(post.image_url, 1600)}
               alt={post.title}
-              className="h-full w-full object-cover opacity-60"
+              fill
+              sizes="100vw"
+              className="object-cover opacity-60"
+              priority
+              unoptimized
             />
             <div className="absolute inset-0 flex items-center">
               <div className="container mx-auto px-4">
@@ -81,6 +128,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         {/* Article Content */}
         <article className="py-16 bg-white">
           <div className="container mx-auto px-4 max-w-4xl">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }} />
             <header className="mb-8">
               <h1
                 className="text-4xl md:text-5xl font-bold text-[#1f2937] mb-4 text-balance"

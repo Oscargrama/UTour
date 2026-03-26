@@ -1,9 +1,0 @@
-# *
-User-agent: *
-Allow: /
-
-# Host
-Host: https://utour.lat
-
-# Sitemaps
-Sitemap: https://utour.lat/sitemap.xml
