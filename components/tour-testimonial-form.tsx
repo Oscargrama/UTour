@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+import { BackButton } from "@/components/back-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -136,9 +136,12 @@ export function TourTestimonialForm({ tourId, tourTitle }: TourTestimonialFormPr
               {loading ? "Enviando..." : "Enviar reseña"}
             </Button>
 
-            <Link href={`/tours/${tourId}`} className="block text-center text-sm font-semibold text-[#1f85d4] hover:underline">
-              Volver al detalle del tour
-            </Link>
+            <BackButton
+              label="Volver al detalle del tour"
+              fallbackHref={`/tours/${tourId}`}
+              variant="link"
+              className="mx-auto text-sm font-semibold text-[#1f85d4] hover:underline"
+            />
           </form>
         </div>
       </div>

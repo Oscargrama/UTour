@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { BrandLogo } from "@/components/brand-logo"
+import Link from "next/link"
 import { Loader2, Sparkles } from "lucide-react"
 
 type OtpStep = "email" | "code"
@@ -131,7 +132,9 @@ export default function LoginPage() {
       <Card className="w-full max-w-md border-[#dbe6ff] shadow-[0_20px_70px_-40px_rgba(31,54,132,0.45)]">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
-            <BrandLogo />
+            <Link href="/" aria-label="Ir al inicio">
+              <BrandLogo />
+            </Link>
           </div>
           <CardTitle className="text-[#1f3684]">Iniciar Sesión</CardTitle>
           <CardDescription>Accede con Google o con código por email</CardDescription>

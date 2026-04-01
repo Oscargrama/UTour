@@ -13,6 +13,7 @@ import { TourPriceBlock } from "@/components/tour-price-block"
 import { getSiteUrl } from "@/lib/site-url"
 import { buildTourStructuredData } from "@/lib/seo-tour-schema"
 import { buildTourMetadata, notFoundTourMetadata } from "@/lib/seo-tour-metadata"
+import { BackButton } from "@/components/back-button"
 
 type TourDetailPageProps = {
   params: Promise<{ id: string }>
@@ -62,9 +63,7 @@ export default async function TourDetailPage({ params }: TourDetailPageProps) {
       <Header />
       <main className="bg-gradient-to-b from-[#f4f8ff] to-white py-10 md:py-14">
         <div className="container mx-auto px-4">
-          <Link href="/" className="mb-6 inline-flex text-sm font-semibold text-[#1f85d4] hover:underline">
-            Volver al inicio
-          </Link>
+          <BackButton label="Volver al inicio" fallbackHref="/" variant="link" className="mb-6 text-sm font-semibold" />
 
           <article className="overflow-hidden rounded-3xl border border-[#dfe6ff] bg-white shadow-[0_20px_65px_-40px_rgba(31,54,132,0.35)]">
             <div className="grid items-start gap-0 lg:grid-cols-[minmax(360px,42%)_1fr]">

@@ -11,8 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { BackButton } from "@/components/back-button"
 
 export default function RegisterAmbassadorPage() {
   const router = useRouter()
@@ -120,13 +119,12 @@ export default function RegisterAmbassadorPage() {
     <div className="min-h-screen bg-gradient-to-b from-[#fefce8] to-white flex items-center justify-center p-4">
       <Card className="w-full max-w-lg">
         <CardHeader>
-          <Link
-            href="/login"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Volver al login
-          </Link>
+          <BackButton
+            label="Volver al login"
+            fallbackHref="/login"
+            variant="link"
+            className="mb-4 text-sm text-muted-foreground hover:text-foreground"
+          />
           <CardTitle className="text-2xl font-bold">Únete como Embajador</CardTitle>
           <CardDescription>Refiere tours y gana comisiones del 10%</CardDescription>
         </CardHeader>

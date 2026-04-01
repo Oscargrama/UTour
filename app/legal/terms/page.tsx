@@ -74,7 +74,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4 text-[#1f2937]">9. Contacto</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Para cualquier pregunta sobre estos Términos y Condiciones, puede contactarnos en d.oinfante@gmail.com
+              Para cualquier pregunta sobre estos Términos y Condiciones, puede contactarnos en info@utour.lat
               o al +57 314 672 6226.
             </p>
           </section>

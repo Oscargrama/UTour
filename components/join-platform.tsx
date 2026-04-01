@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Car, CircleCheck, Sparkles, Handshake } from "lucide-react"
 import Link from "next/link"
+
+const checklistItemClass =
+  "flex items-start gap-3 rounded-xl border border-[#e8edff]/80 bg-white/60 px-3 py-2.5 backdrop-blur-sm"
 
 export function JoinPlatform() {
   return (
@@ -28,80 +30,116 @@ export function JoinPlatform() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <Card className="overflow-hidden border border-[#dfe6ff] bg-white/90 shadow-[0_22px_65px_-35px_rgba(31,54,132,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_-30px_rgba(122,44,232,0.35)]">
-            <CardHeader className="bg-gradient-to-r from-[#7A2CE8] via-[#555BDF] to-[#38CBE1] text-white">
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Car className="h-6 w-6" />
-                Guías Seleccionados
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <h3 className="text-lg font-semibold text-[#1f3684]">Guías certificados por UTour</h3>
-              <p className="text-[#42527f]">
-                Formamos una red selecta de guías y riders (con o sin vehiculo) que entienden que el viajero marca el
-                ritmo. No buscamos volumen. Buscamos criterio, calidez y excelencia.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1f3684]">Experiencias privadas y semiprivadas</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1f3684]">Estándar de calidad definido</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1f3684]">Capacitación y acompañamiento</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1f3684]">Trabajo por solicitud, no masivo</span>
-                </li>
-              </ul>
-              <Button className="brand-cta-btn w-full rounded-full" size="lg" asChild>
-                <Link href="/auth/register-guide">Postular como guía o rider</Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2 md:items-stretch">
+          {/* Guías — gradiente violeta / cyan */}
+          <article className="group relative flex h-full flex-col rounded-[28px] bg-gradient-to-br from-[#7A2CE8] via-[#555bdf] to-[#38CBE1] p-[1px] shadow-[0_24px_60px_-28px_rgba(122,44,232,0.55)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_32px_70px_-24px_rgba(122,44,232,0.45)]">
+            <div className="relative flex h-full flex-col overflow-hidden rounded-[27px] bg-gradient-to-b from-white via-[#fafbff] to-[#f0f4ff]">
+              <div className="pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full bg-[#7A2CE8]/12 blur-2xl" />
+              <div className="pointer-events-none absolute bottom-0 left-0 h-32 w-32 rounded-full bg-[#38CBE1]/10 blur-2xl" />
 
-          <Card className="overflow-hidden border border-[#dfe6ff] bg-white/90 shadow-[0_22px_65px_-35px_rgba(31,54,132,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_-30px_rgba(122,44,232,0.35)]">
-            <CardHeader className="bg-gradient-to-r from-[#1F3684] via-[#1F85D4] to-[#38CBE1] text-white">
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Handshake className="h-6 w-6" />
-                Aliados Estratégicos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <h3 className="text-lg font-semibold text-[#1f3684]">Aliados estratégicos</h3>
-              <p className="text-[#42527f]">
-                Hoteles, anfitriones y espacios que quieran ofrecer a sus huéspedes algo diferente a los tours
-                tradicionales.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1f3684]">Comisión por reserva confirmada</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1f3684]">Código personalizado</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1f3684]">Seguimiento transparente</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CircleCheck className="h-5 w-5 text-[#1f85d4] flex-shrink-0 mt-0.5" />
-                  <span className="text-[#1f3684]">Experiencias que elevan su servicio</span>
-                </li>
-              </ul>
-              <Button className="brand-cta-btn w-full rounded-full" size="lg" asChild>
-                <Link href="/auth/register-ambassador">Convertirme en aliado</Link>
-              </Button>
-            </CardContent>
-          </Card>
+              <div className="relative flex h-full flex-col px-6 pb-6 pt-7 md:px-8 md:pb-8 md:pt-8">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7A2CE8] to-[#555bdf] text-white shadow-[0_12px_28px_-8px_rgba(122,44,232,0.65)] ring-4 ring-white/80">
+                    <Car className="h-7 w-7" aria-hidden />
+                  </span>
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#7a2ce8]">En ruta</p>
+                    <h3
+                      className="mt-1 text-xl font-bold leading-tight text-[#1f3684] md:text-2xl"
+                      style={{ fontFamily: "var(--font-heading)" }}
+                    >
+                      Guías y riders certificados
+                    </h3>
+                  </div>
+                </div>
+
+                <p className="mt-5 text-[0.95rem] leading-relaxed text-[#42527f]">
+                  Red selecta de guías y riders (con o sin vehículo) que entienden que el viajero marca el ritmo. Criterio,
+                  calidez y excelencia — sin volumen masivo.
+                </p>
+
+                <ul className="mt-6 flex flex-1 flex-col gap-2.5">
+                  <li className={checklistItemClass}>
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#7a2ce8]" aria-hidden />
+                    <span className="text-sm font-medium text-[#1f3684]">Experiencias privadas y semiprivadas</span>
+                  </li>
+                  <li className={checklistItemClass}>
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#7a2ce8]" aria-hidden />
+                    <span className="text-sm font-medium text-[#1f3684]">Estándar de calidad definido</span>
+                  </li>
+                  <li className={checklistItemClass}>
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#7a2ce8]" aria-hidden />
+                    <span className="text-sm font-medium text-[#1f3684]">Capacitación y acompañamiento</span>
+                  </li>
+                  <li className={checklistItemClass}>
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#7a2ce8]" aria-hidden />
+                    <span className="text-sm font-medium text-[#1f3684]">Trabajo por solicitud, no masivo</span>
+                  </li>
+                </ul>
+
+                <div className="mt-auto border-t border-[#dfe6ff]/80 pt-6">
+                  <Button className="brand-cta-btn h-12 w-full rounded-full text-base shadow-[0_8px_24px_-6px_rgba(122,44,232,0.45)]" size="lg" asChild>
+                    <Link href="/auth/register-guide">Postular como guía o rider</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          {/* Aliados — gradiente índigo / azul */}
+          <article className="group relative flex h-full flex-col rounded-[28px] bg-gradient-to-br from-[#1F3684] via-[#1F85D4] to-[#38CBE1] p-[1px] shadow-[0_24px_60px_-28px_rgba(31,54,132,0.5)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_32px_70px_-24px_rgba(31,85,212,0.4)]">
+            <div className="relative flex h-full flex-col overflow-hidden rounded-[27px] bg-gradient-to-b from-white via-[#f8faff] to-[#eef5ff]">
+              <div className="pointer-events-none absolute -right-6 top-0 h-40 w-40 rounded-full bg-[#1f85d4]/15 blur-2xl" />
+              <div className="pointer-events-none absolute bottom-4 left-4 h-28 w-28 rounded-full bg-[#1f3684]/10 blur-2xl" />
+
+              <div className="relative flex h-full flex-col px-6 pb-6 pt-7 md:px-8 md:pb-8 md:pt-8">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1F3684] to-[#1F85D4] text-white shadow-[0_12px_28px_-8px_rgba(31,85,212,0.55)] ring-4 ring-white/80">
+                    <Handshake className="h-7 w-7" aria-hidden />
+                  </span>
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#1f85d4]">En destino</p>
+                    <h3
+                      className="mt-1 text-xl font-bold leading-tight text-[#1f3684] md:text-2xl"
+                      style={{ fontFamily: "var(--font-heading)" }}
+                    >
+                      Hoteles y anfitriones aliados
+                    </h3>
+                  </div>
+                </div>
+
+                <p className="mt-5 text-[0.95rem] leading-relaxed text-[#42527f]">
+                  Ofrece a tus huéspedes algo distinto a los tours tradicionales: experiencias UTour con comisiones claras y
+                  seguimiento transparente.
+                </p>
+
+                <ul className="mt-6 flex flex-1 flex-col gap-2.5">
+                  <li className={checklistItemClass}>
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#1f85d4]" aria-hidden />
+                    <span className="text-sm font-medium text-[#1f3684]">Comisión por reserva confirmada</span>
+                  </li>
+                  <li className={checklistItemClass}>
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#1f85d4]" aria-hidden />
+                    <span className="text-sm font-medium text-[#1f3684]">Código personalizado</span>
+                  </li>
+                  <li className={checklistItemClass}>
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#1f85d4]" aria-hidden />
+                    <span className="text-sm font-medium text-[#1f3684]">Seguimiento transparente</span>
+                  </li>
+                  <li className={checklistItemClass}>
+                    <CircleCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#1f85d4]" aria-hidden />
+                    <span className="text-sm font-medium text-[#1f3684]">Experiencias que elevan su servicio</span>
+                  </li>
+                </ul>
+
+                <div className="mt-auto border-t border-[#dfe6ff]/80 pt-6">
+                  <Button className="brand-cta-btn h-12 w-full rounded-full text-base shadow-[0_8px_24px_-6px_rgba(31,85,212,0.4)]" size="lg" asChild>
+                    <Link href="/auth/register-ambassador">Convertirme en aliado</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
     </section>

@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { Mail, Lock } from "lucide-react"
 import { BrandLogo } from "@/components/brand-logo"
+import Link from "next/link"
 
 export default function SetupAdminPage() {
   const router = useRouter()
@@ -105,7 +106,9 @@ export default function SetupAdminPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
-            <BrandLogo />
+            <Link href="/" aria-label="Ir al inicio">
+              <BrandLogo />
+            </Link>
           </div>
           <CardTitle>Configuración de Administrador</CardTitle>
           <CardDescription>Crea tu cuenta de administrador para acceder al panel de control</CardDescription>
@@ -119,7 +122,7 @@ export default function SetupAdminPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="oscar@delabmarketing.com"
+                  placeholder="info@utour.lat"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required

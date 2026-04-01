@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, User, Users, Briefcase, Search, FileText, MessageCircle, Map, CircleHelp } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,6 +93,7 @@ export async function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[360px] max-w-[92vw] bg-[#f8f9ff]">
+              <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
               <nav className="mt-8 flex flex-col gap-2">
                 {navigation.map((item) => (
                   <Link

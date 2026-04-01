@@ -113,7 +113,7 @@ export default function PrivacyPage() {
               contactarnos a través de:
             </p>
             <ul className="list-none pl-6 space-y-2 text-muted-foreground">
-              <li>Email: d.oinfante@gmail.com</li>
+              <li>Email: info@utour.lat</li>
               <li>WhatsApp: +57 314 672 6226</li>
               <li>Dirección: Medellín, Colombia</li>
             </ul>

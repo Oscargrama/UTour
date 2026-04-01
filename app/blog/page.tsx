@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Calendar, User } from "lucide-react"
 import Image from "next/image"
+import { ArrowUpRight } from "lucide-react"
 import type { Metadata } from "next"
+import { BlogFeed } from "@/components/blog-feed"
+import { BlogNewsletter } from "@/components/blog-newsletter"
 
 export const revalidate = 86400
 
@@ -43,6 +44,54 @@ function getOptimizedImageUrl(url: string, width: number) {
   return url
 }
 
+type Category = "destinations" | "guides" | "tips"
+
+type BlogPostRow = {
+  id: string
+  slug: string
+  title: string
+  excerpt: string | null
+  content: string | null
+  image_url: string | null
+  author: string | null
+  created_at: string | null
+}
+
+const CATEGORY_KEYWORDS: Record<Category, string[]> = {
+  tips: ["precio", "vale la pena", "tips", "consejos", "presupuesto", "costos"],
+  guides: ["guía", "itinerario", "qué hacer", "como", "cómo", "ruta", "plan", "3 días", "tres días"],
+  destinations: ["guatape", "guatapé", "medellin", "medellín", "comuna", "antioquia", "colombia"],
+}
+
+function estimateReadTime(content?: string | null) {
+  if (!content) return "5 min"
+  const text = content.replace(/<[^>]+>/g, " ")
+  const words = text.trim().split(/\s+/).filter(Boolean).length
+  const minutes = Math.max(3, Math.round(words / 200))
+  return `${minutes} min`
+}
+
+function formatDateLabel(date?: string | null) {
+  if (!date) return "2026"
+  try {
+    return new Date(date).toLocaleDateString("es-CO", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+  } catch {
+    return "2026"
+  }
+}
+
+function getCategoryForPost(post: BlogPostRow): Category {
+  const haystack = `${post.title ?? ""} ${post.excerpt ?? ""} ${post.slug ?? ""} ${post.content ?? ""}`.toLowerCase()
+  if (CATEGORY_KEYWORDS.tips.some((keyword) => haystack.includes(keyword))) return "tips"
+  if (CATEGORY_KEYWORDS.guides.some((keyword) => haystack.includes(keyword))) return "guides"
+  if (CATEGORY_KEYWORDS.destinations.some((keyword) => haystack.includes(keyword))) return "destinations"
+  return "guides"
+}
+
 export default async function BlogPage() {
   const supabase = await createClient()
 
@@ -52,83 +101,81 @@ export default async function BlogPage() {
     .eq("published", true)
     .order("created_at", { ascending: false })
 
+  const mappedPosts = (posts as BlogPostRow[] | null)?.map((post) => ({
+    id: post.id,
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    image_url: post.image_url,
+    author: post.author,
+    created_at: formatDateLabel(post.created_at),
+    readTime: estimateReadTime(post.content),
+    category: getCategoryForPost(post),
+  }))
+
+  const featuredPost = mappedPosts?.[0]
+  const feedPosts = mappedPosts ? (mappedPosts.length > 1 ? mappedPosts.slice(1) : mappedPosts) : []
+  const featuredImage =
+    featuredPost?.image_url
+      ? getOptimizedImageUrl(featuredPost.image_url, 1200)
+      : "/og/utour-default-1200x630.svg"
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Header />
 
-      <main>
+      <main className="bg-[#f8faff]">
         {/* Hero Section */}
-        <section className="bg-[#fefce8] py-16">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto">
+        <section className="relative overflow-hidden bg-[#f4f7ff] pb-20 pt-28">
+          <div className="absolute inset-x-0 top-0 h-52 brand-gradient-bg opacity-10" />
+          <div className="container mx-auto grid items-center gap-12 px-4 md:grid-cols-12">
+            <div className="md:col-span-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7a2ce8]">Historia destacada</p>
               <h1
-                className="text-5xl font-bold text-[#1f2937] mb-4 text-balance"
+                className="mt-4 text-4xl font-black leading-tight text-[#101b4c] md:text-6xl"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                Blog de Viajes
+                {featuredPost?.title ?? "Historias reales para viajar sin prisas"}
               </h1>
-              <p className="text-xl text-muted-foreground leading-relaxed">
-                Guías locales, tips de viaje y las mejores recomendaciones para explorar Colombia como un local.
+              <p className="mt-4 max-w-xl text-lg leading-relaxed text-[#5b6a97]">
+                {featuredPost?.excerpt ??
+                  "Guías locales, rutas lentas y experiencias diseñadas para que vivas Colombia con más libertad."}
               </p>
+              <div className="mt-6 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#7b88b2]">
+                <span>{featuredPost?.readTime ?? "5 min"}</span>
+                <span className="text-[#c1c9e6]">•</span>
+                <span>{featuredPost?.created_at ?? "2026"}</span>
+              </div>
+              <Button asChild className="brand-cta-btn mt-8 rounded-full px-7">
+                <Link href={featuredPost ? `/blog/${featuredPost.slug}` : "/blog"}>
+                  Leer historia <ArrowUpRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            <div className="md:col-span-5">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-[#d9e2ff] bg-white shadow-[0_20px_50px_rgba(16,27,76,0.16)]">
+                <Image
+                  src={featuredImage}
+                  alt={featuredPost?.title ?? "Historias UTour"}
+                  fill
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  className="object-cover"
+                  priority
+                  unoptimized
+                />
+              </div>
             </div>
           </div>
         </section>
 
         {/* Blog Posts Grid */}
-        <section className="py-16 bg-white">
+        <section className="py-24">
           <div className="container mx-auto px-4">
-            {posts && posts.length > 0 ? (
-              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {posts.map((post) => (
-                  <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    {post.image_url && (
-                      <div className="relative h-48 overflow-hidden">
-                        <Image
-                          src={getOptimizedImageUrl(post.image_url, 800)}
-                          alt={post.title}
-                          fill
-                          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                          className="object-cover transition-transform hover:scale-105"
-                          unoptimized
-                        />
-                      </div>
-                    )}
-
-                    <CardHeader>
-                      <CardTitle className="text-xl" style={{ fontFamily: "var(--font-heading)" }}>
-                        {post.title}
-                      </CardTitle>
-                      <CardDescription className="leading-relaxed">{post.excerpt}</CardDescription>
-                    </CardHeader>
-
-                    <CardContent>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          <span>{post.author}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-
-                    <CardFooter>
-                      <Button asChild variant="outline" className="w-full bg-transparent">
-                        <Link href={`/blog/${post.slug}`}>Leer Más →</Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">No hay posts publicados aún. Vuelve pronto!</p>
-              </div>
-            )}
+            <BlogFeed posts={feedPosts} />
           </div>
         </section>
+
+        <BlogNewsletter />
       </main>
 
       <Footer />

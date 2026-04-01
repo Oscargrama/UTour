@@ -20,8 +20,8 @@ export function BrandLogo({ className, compact = false, onDark = false, large = 
       )}
     >
       <Image
-        src="/Utour-logo.svg"
-        alt="Utour"
+        src="/logo-utour.png"
+        alt="UTour"
         width={width}
         height={height}
         className={cn(compact ? "h-8 w-auto" : large ? "h-14 w-auto" : "h-12 w-auto")}

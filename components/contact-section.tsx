@@ -53,7 +53,7 @@ export function ContactSection() {
                 <Mail className="h-5 w-5 text-[#1f85d4]" />
               </div>
               <h3 className="mb-1 font-semibold">Email</h3>
-              <p className="text-sm text-muted-foreground break-all">d.oinfante@gmail.com</p>
+              <p className="text-sm text-muted-foreground break-all">info@utour.lat</p>
             </CardContent>
           </Card>
 

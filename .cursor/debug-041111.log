@@ -1,0 +1,6 @@
+{"sessionId":"041111","location":"currency-switcher.tsx:render","message":"CurrencySwitcher first render","data":{"currency":"COP","hypothesisId":"B"},"timestamp":1775080024091,"runId":"post-fix"}
+{"sessionId":"041111","location":"header-hydration-debug.tsx:useLayoutEffect","message":"Sheet trigger DOM after commit","data":{"hasUser":false,"ariaControls":null,"dataState":null,"hypothesisId":"C"},"timestamp":1775080024110,"runId":"post-fix"}
+{"sessionId":"041111","location":"blog/[slug]/page.tsx:BlogPostPage","message":"Blog SSR dateLabel","data":{"dateLabel":"25 de mar de 2026","slug":"guatape-sin-prisas-el-lujo-del-tiempo","hypothesisId":"D"},"timestamp":1775080025168,"runId":"pre-fix"}
+{"sessionId":"041111","location":"header.tsx:Header","message":"Header SSR user branch","data":{"hasUser":false,"hypothesisId":"A"},"timestamp":1775080025545,"runId":"pre-fix"}
+{"sessionId":"041111","location":"blog/[slug]/page.tsx:BlogPostPage","message":"Blog SSR dateLabel","data":{"dateLabel":"25 de mar de 2026","slug":"guatape-sin-prisas-el-lujo-del-tiempo","hypothesisId":"D"},"timestamp":1775080026105,"runId":"pre-fix"}
+{"sessionId":"041111","location":"header.tsx:Header","message":"Header SSR user branch","data":{"hasUser":false,"hypothesisId":"A"},"timestamp":1775080026280,"runId":"pre-fix"}

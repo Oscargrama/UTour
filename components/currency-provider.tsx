@@ -2,9 +2,17 @@
 
 import type React from "react"
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react"
 import type { CurrencyCode, FxRates } from "@/lib/currency"
-import { detectCurrencyFromLocale } from "@/lib/currency"
+import { detectCurrencyFromLocale, isSupportedCurrency } from "@/lib/currency"
 
 type CurrencyContextValue = {
   currency: CurrencyCode
@@ -17,25 +25,54 @@ const CurrencyContext = createContext<CurrencyContextValue | undefined>(undefine
 
 const STORAGE_KEY = "utour_currency"
 
+const currencyListeners = new Set<() => void>()
+
+function notifyCurrencyListeners() {
+  currencyListeners.forEach((l) => l())
+}
+
+function subscribeCurrency(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {}
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY || e.key === null) onStoreChange()
+  }
+  window.addEventListener("storage", onStorage)
+  currencyListeners.add(onStoreChange)
+  return () => {
+    window.removeEventListener("storage", onStorage)
+    currencyListeners.delete(onStoreChange)
+  }
+}
+
+function getCurrencySnapshot(): CurrencyCode {
+  if (typeof window === "undefined") return "COP"
+  const raw = window.localStorage.getItem(STORAGE_KEY)
+  if (isSupportedCurrency(raw)) return raw
+  return "COP"
+}
+
+function getServerCurrencySnapshot(): CurrencyCode {
+  return "COP"
+}
+
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<CurrencyCode>("COP")
+  const currency = useSyncExternalStore(
+    subscribeCurrency,
+    getCurrencySnapshot,
+    getServerCurrencySnapshot,
+  )
   const [rates, setRates] = useState<FxRates | null>(null)
   const [loadingRates, setLoadingRates] = useState(true)
 
   const setCurrency = useCallback((value: CurrencyCode) => {
-    setCurrencyState(value)
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, value)
-    }
+    if (typeof window === "undefined") return
+    window.localStorage.setItem(STORAGE_KEY, value)
+    notifyCurrencyListeners()
   }, [])
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    const stored = window.localStorage.getItem(STORAGE_KEY) as CurrencyCode | null
-    if (stored) {
-      setCurrencyState(stored)
-      return
-    }
+    if (window.localStorage.getItem(STORAGE_KEY)) return
 
     const bootstrap = async () => {
       try {
@@ -43,22 +80,22 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         if (geoRes.ok) {
           const data = (await geoRes.json()) as { currency?: CurrencyCode; locale?: string | null }
           if (data.currency) {
-            setCurrencyState(data.currency)
+            setCurrency(data.currency)
             return
           }
           const fallback = detectCurrencyFromLocale(data.locale || navigator.language)
-          setCurrencyState(fallback)
+          setCurrency(fallback)
           return
         }
       } catch {
         // Ignore geo errors and fallback to browser locale.
       }
       const fallback = detectCurrencyFromLocale(navigator.language)
-      setCurrencyState(fallback)
+      setCurrency(fallback)
     }
 
     void bootstrap()
-  }, [])
+  }, [setCurrency])
 
   useEffect(() => {
     const loadRates = async () => {

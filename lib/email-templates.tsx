@@ -43,7 +43,7 @@ export const emailTemplates = {
               <p>Si tienes alguna pregunta, no dudes en contactarnos:</p>
               <ul>
                 <li><strong>WhatsApp:</strong> +57 317 849 4031</li>
-                <li><strong>Email:</strong> oscar@delabmarketing.com</li>
+                <li><strong>Email:</strong> info@utour.lat</li>
                 <li><strong>Instagram:</strong> @oscargrama</li>
               </ul>
 
@@ -76,7 +76,7 @@ export const emailTemplates = {
       Te contactaremos pronto para confirmar todos los detalles.
       
       WhatsApp: +57 317 849 4031
-      Email: oscar@delabmarketing.com
+      Email: info@utour.lat
       
       Saludos,
       Oscar - UTour
@@ -121,7 +121,7 @@ export const emailTemplates = {
             </div>
             <div class="footer">
               <p>UTour - Experiencias Auténticas en Colombia</p>
-              <p>WhatsApp: +57 317 849 4031 | Email: oscar@delabmarketing.com</p>
+              <p>WhatsApp: +57 317 849 4031 | Email: info@utour.lat</p>
             </div>
           </div>
         </body>

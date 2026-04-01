@@ -20,7 +20,7 @@ export function AdminHeader() {
   return (
     <header className="border-b bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/admin" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2" aria-label="Ir al inicio">
           <BrandLogo />
           <span className="ml-1 text-sm font-medium text-muted-foreground">Admin</span>
         </Link>

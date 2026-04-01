@@ -182,6 +182,7 @@ El webhook:
 ## Scripts de blog / SEO
 
 Los posts se insertan via SQL en `scripts/011_*.sql`, `scripts/012_*.sql`, etc.
+No se crean rutas manuales por post; el blog consume Supabase y se actualiza vía ISR.
 
 ---
 
@@ -201,4 +202,3 @@ Vercel toma el deploy automáticamente.
 
 - **WhatsApp:** +57 314 672 6226  
 - **Email:** d.oinfante@gmail.com
-

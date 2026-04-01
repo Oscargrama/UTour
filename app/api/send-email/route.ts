@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const resendApiKey = process.env.RESEND_API_KEY
     const resendFrom = process.env.RESEND_FROM
-    const resendReplyTo = process.env.RESEND_REPLY_TO || "d.oinfante@gmail.com"
+    const resendReplyTo = process.env.RESEND_REPLY_TO || "oscar@utour.lat"
     if (!resendApiKey) {
       return NextResponse.json(
         {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "Missing RESEND_FROM",
-          details: "Define RESEND_FROM, por ejemplo: UTour <reservas@delabmarketing.com>",
+          details: "Define RESEND_FROM, por ejemplo: UTour <booking@utour.lat>",
         },
         { status: 500 },
       )

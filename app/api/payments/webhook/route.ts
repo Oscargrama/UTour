@@ -118,7 +118,7 @@ async function sendBookingStatusEmail(params: {
   // #endregion
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.RESEND_FROM
-  const replyTo = process.env.RESEND_REPLY_TO || "d.oinfante@gmail.com"
+  const replyTo = process.env.RESEND_REPLY_TO || "oscar@utour.lat"
   if (!apiKey) {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/8b92589e-f5b9-4055-9401-c94eea722f4a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'webhook:sendBookingStatusEmail:skipEnv',message:'skipping email - env missing',data:{hasApiKey:!!apiKey,hasFrom:!!from},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
