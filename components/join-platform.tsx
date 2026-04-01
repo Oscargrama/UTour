@@ -103,7 +103,7 @@ export function JoinPlatform() {
                       className="mt-1 text-xl font-bold leading-tight text-[#1f3684] md:text-2xl"
                       style={{ fontFamily: "var(--font-heading)" }}
                     >
-                      Hoteles y anfitriones aliados
+                      Hostales, hoteles y anfitriones aliados
                     </h3>
                   </div>
                 </div>

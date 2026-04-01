@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { BackButton } from "@/components/back-button"
+import Link from "next/link"
 
 export default function RegisterAmbassadorPage() {
   const router = useRouter()
