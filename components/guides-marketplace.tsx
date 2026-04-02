@@ -84,8 +84,19 @@ export function GuidesMarketplace() {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,0.95fr)_1.05fr]">
           <div className="relative overflow-hidden rounded-[28px] border border-[#dfe6ff] bg-white shadow-[0_22px_65px_-35px_rgba(31,54,132,0.45)]">
             <div className="relative h-[460px] md:h-[560px]">
-              <Image src="/images/foundingteam.jpeg" alt="Equipo fundador UTour" fill className="object-cover object-top" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0f1c4f]/70 via-[#1f3684]/10 to-transparent" />
+              <Image
+                src="/images/foundingteam.webp"
+                alt="Equipo fundador UTour"
+                fill
+                priority
+                sizes="(min-width: 1024px) min(48vw, 640px), 100vw"
+                className="object-cover object-bottom"
+                unoptimized
+              />
+              <div
+                className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-[#0f1c4f]/70 via-[#1f3684]/10 to-transparent"
+                aria-hidden
+              />
             </div>
           </div>
 
